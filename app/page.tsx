@@ -6,6 +6,7 @@ import { HeroOrb } from "@/components/HeroOrb";
 import { InteractiveDemo } from "@/components/InteractiveDemo";
 import { AiMark, Navigation, type Lang } from "@/components/Navigation";
 import { Reveal } from "@/components/Reveal";
+import { PremiumFooter } from "@/components/PremiumFooter";
 
 const copy = {
   EN: {
@@ -97,27 +98,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative z-10 overflow-hidden px-5 py-20 md:py-28">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(55,112,255,.08),transparent_45%)]" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-8 rounded-[2.6rem] border border-white/[0.07] bg-white/[0.025] p-6 shadow-[0_28px_100px_rgba(0,0,0,.48)] md:p-12 lg:grid-cols-[.9fr_1.1fr]">
-          <div className="order-2 lg:order-1"><HeroOrb quiet /></div>
-          <Reveal className="order-1 lg:order-2">
-            <h2 className="text-balance text-5xl font-medium leading-[0.98] tracking-[-0.07em] md:text-7xl">{t.heroTitle}</h2>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-white/50 md:text-xl">{t.heroSubtitle}</p>
-            <div className="mt-9"><BlueButton>{t.cta}</BlueButton></div>
-          </Reveal>
-        </div>
-      </section>
-
-      <footer className="relative z-10 border-t border-white/[0.06] px-5 py-10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-center md:justify-between">
-          <a href="#top" className="flex items-center gap-2 text-sm font-medium text-white"><span>Altr</span><AiMark /></a>
-          <div className="flex flex-wrap gap-x-7 gap-y-3 text-sm text-white/35">
-            <a className="footer-link" href="#product">{t.footer.product}</a><a className="footer-link" href="#how">{t.footer.how}</a><a className="footer-link" href="#memory">{t.footer.memory}</a><a className="footer-link" href="#vision">{t.footer.vision}</a><a className="footer-link" href="https://x.com">X</a><a className="footer-link" href="https://github.com">GitHub</a><a className="footer-link" href="#">{t.footer.privacy}</a><a className="footer-link" href="#">{t.footer.terms}</a>
-          </div>
-          <p className="text-sm text-white/28">© 2026 Altr</p>
-        </div>
-      </footer>
+      <PremiumFooter lang={lang} />
     </main>
   );
 }
