@@ -255,3 +255,124 @@ body::before {
     scroll-behavior: auto !important;
   }
 }
+
+.neuron-chat-visual {
+  contain: layout paint;
+  isolation: isolate;
+}
+
+.neuron-chat-visual svg {
+  transform: translateZ(0);
+}
+
+.visual-inner-frame {
+  fill: rgba(255, 255, 255, 0.012);
+  stroke: rgba(255, 255, 255, 0.045);
+  stroke-width: 0.14;
+}
+
+.chat-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: chat-soft-presence 8s ease-in-out infinite;
+}
+
+.chat-node-1 { animation-delay: -2.1s; }
+.chat-node-2 { animation-delay: -4.6s; }
+.chat-node-3 { animation-delay: -1.2s; }
+
+.chat-node-surface {
+  fill: url(#node-fill);
+  stroke: rgba(255, 255, 255, 0.085);
+  stroke-width: 0.18;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.34));
+}
+
+.chat-node-title {
+  fill: rgba(255, 255, 255, 0.48);
+  font-size: 2.7px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.chat-node-line {
+  fill: rgba(226, 238, 255, 0.2);
+}
+
+.chat-node-core {
+  fill: rgba(191, 219, 254, 0.78);
+  filter: drop-shadow(0 0 4px rgba(125, 178, 255, 0.82));
+  animation: core-breathe 5.2s ease-in-out infinite;
+}
+
+.connection-layer {
+  filter: drop-shadow(0 0 5px rgba(82, 142, 255, 0.18));
+}
+
+.signal-line {
+  fill: none;
+  stroke: url(#signal-gradient);
+  stroke-width: 0.18;
+  stroke-linecap: round;
+  opacity: 0.72;
+  stroke-dasharray: 0.28 0.035;
+  animation: line-pulse var(--signal-duration) ease-in-out var(--signal-delay) infinite;
+}
+
+.signal-particle {
+  fill: rgba(219, 234, 254, 0.94);
+  filter: url(#signal-glow);
+  opacity: 0.92;
+}
+
+.signal-particle-small {
+  fill: rgba(147, 197, 253, 0.72);
+  opacity: 0.7;
+}
+
+.memory-dust circle {
+  fill: rgba(147, 197, 253, 0.5);
+  opacity: 0.44;
+  animation: dust-drift 9s ease-in-out infinite;
+}
+
+.memory-dust circle:nth-child(2n) { animation-delay: -3s; }
+.memory-dust circle:nth-child(3n) { animation-delay: -6s; }
+
+@keyframes chat-soft-presence {
+  0%, 100% { opacity: 0.78; }
+  45% { opacity: 0.94; }
+  55% { opacity: 1; filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.09)); }
+}
+
+@keyframes core-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes line-pulse {
+  0%, 28%, 100% { opacity: 0.32; stroke-width: 0.14; }
+  42%, 58% { opacity: 0.78; stroke-width: 0.22; }
+}
+
+@keyframes dust-drift {
+  0%, 100% { opacity: 0.22; transform: translate(0, 0); }
+  50% { opacity: 0.58; transform: translate(0.4px, -0.55px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-node,
+  .chat-node-core,
+  .signal-line,
+  .memory-dust circle,
+  .ai-core-dot::after,
+  .hero-gradient-sweep,
+  .hero-visual,
+  .typing-dots span {
+    animation: none !important;
+  }
+
+  .signal-particle {
+    display: none;
+  }
+}
