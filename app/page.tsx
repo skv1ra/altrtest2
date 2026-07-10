@@ -52,7 +52,7 @@ const copy = {
 
 function PrimaryButton({ children }: { children: React.ReactNode }) {
   return (
-    <a href="#product" className="future-button group inline-flex items-center justify-center rounded-full px-6 py-4 text-sm font-medium tracking-[0.02em] text-white">
+    <a href="/auth?mode=register" className="future-button group inline-flex items-center justify-center rounded-full px-6 py-4 text-sm font-medium tracking-[0.02em] text-white">
       <span>{children}</span>
       <span className="ml-3 h-1.5 w-1.5 rounded-full bg-cyan-100 shadow-[0_0_18px_rgba(125,211,252,.95)] transition duration-500 group-hover:scale-150" />
     </a>

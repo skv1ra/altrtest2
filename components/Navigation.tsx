@@ -1,12 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { UserRound } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getCurrentProfile } from "@/lib/auth";
 
 export type Lang = "EN" | "UA";
 
 const labels = {
-  EN: { product: "Product", how: "How it works", memory: "Memory", vision: "Vision" },
-  UA: { product: "Продукт", how: "Як працює", memory: "Памʼять", vision: "Візія" },
+  EN: { product: "Product", how: "How it works", memory: "Memory", vision: "Vision", profile: "Profile" },
+  UA: { product: "Продукт", how: "Як працює", memory: "Памʼять", vision: "Візія", profile: "Профіль" },
 };
 
 export function AiMark() {
@@ -15,6 +19,18 @@ export function AiMark() {
 
 export function Navigation({ lang, setLang }: { lang: Lang; setLang: (lang: Lang) => void }) {
   const t = labels[lang];
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    const syncSession = () => setSignedIn(Boolean(getCurrentProfile()));
+    syncSession();
+    window.addEventListener("altr-auth-change", syncSession);
+    window.addEventListener("storage", syncSession);
+    return () => {
+      window.removeEventListener("altr-auth-change", syncSession);
+      window.removeEventListener("storage", syncSession);
+    };
+  }, []);
 
   return (
     <motion.header
@@ -33,10 +49,23 @@ export function Navigation({ lang, setLang }: { lang: Lang; setLang: (lang: Lang
           <a href="#memory" className="nav-link">{t.memory}</a>
           <a href="#vision" className="nav-link">{t.vision}</a>
         </div>
-        <div className="flex items-center gap-2 text-sm tracking-[0.08em]">
-          <button onClick={() => setLang("EN")} className={`language-link ${lang === "EN" ? "text-cyan-100" : "text-white/34"}`}>EN</button>
-          <span className="text-white/16">/</span>
-          <button onClick={() => setLang("UA")} className={`language-link ${lang === "UA" ? "text-cyan-100" : "text-white/34"}`}>UA</button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm tracking-[0.08em]">
+            <button onClick={() => setLang("EN")} className={`language-link ${lang === "EN" ? "text-cyan-100" : "text-white/34"}`}>EN</button>
+            <span className="text-white/16">/</span>
+            <button onClick={() => setLang("UA")} className={`language-link ${lang === "UA" ? "text-cyan-100" : "text-white/34"}`}>UA</button>
+          </div>
+          <span className="hidden h-5 w-px bg-white/[.08] sm:block" />
+          <Link
+            href={signedIn ? "/dashboard" : "/auth?mode=register"}
+            aria-label={t.profile}
+            title={t.profile}
+            className="profile-nav-button group"
+          >
+            <UserRound className="h-[17px] w-[17px]" />
+            <span className="hidden text-xs tracking-[.04em] sm:inline">{t.profile}</span>
+            {signedIn && <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-cyan-100 shadow-[0_0_10px_rgba(103,232,249,.95)]" />}
+          </Link>
         </div>
       </nav>
     </motion.header>
