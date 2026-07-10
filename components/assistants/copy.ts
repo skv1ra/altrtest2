@@ -1,0 +1,33 @@
+import { AssistantsLang } from "./types";
+
+export const assistantsCopy = {
+  EN: {
+    hero: "Your AI workforce.", subtitle: "Create assistants that understand your context, protect your time and handle the repetitive work around you.", available: "3 assistants available", configure: "Configure Assistants",
+    twinType: "Personal AI Twin", customType: "Custom Assistant", learns: "Learns from you", customizable: "Customizable", active: "Active", draft: "Draft",
+    configTitle: "Configure assistant", configSubtitle: "Set behavior, access and control boundaries.", save: "Save configuration", reset: "Reset", saved: "Configuration saved",
+    assign: "Assign the dirty work.", assignSub: "Define which assistant owns each repeated part of your communication and workflow.", preview: "Test assistant behavior.", control: "Control layer",
+    controlText: "Every assistant can be limited by memory access, approval rules and autonomy level. You decide what it can know, suggest or do.", generate: "Generate Draft", inputPlaceholder: "Client asks: Can you send the final price and delivery timeline today?",
+    labels: { name:"Assistant name", role:"Role", description:"Description", tone:"Tone", personality:"Personality", response:"Response style", autonomy:"Autonomy level", memory:"Memory access", learning:"Learning", tasks:"Main tasks", boundaries:"Safety / boundaries", sources:"Allowed data sources" },
+    twinWarning: "Altr Twin should always be controlled by you. It can draft and suggest responses, but autonomous actions should require clear permission.",
+  },
+  UA: {
+    hero: "Твоя AI-команда.", subtitle: "Створи асистентів, які розуміють твій контекст, економлять час і беруть на себе повторювану роботу.", available: "Доступно 3 асистенти", configure: "Налаштувати асистентів",
+    twinType: "Персональний AI-двійник", customType: "Кастомний асистент", learns: "Навчається від тебе", customizable: "Налаштовується", active: "Активний", draft: "Чернетка",
+    configTitle: "Налаштування асистента", configSubtitle: "Визнач поведінку, доступ і межі контролю.", save: "Зберегти налаштування", reset: "Скинути", saved: "Налаштування збережено",
+    assign: "Делегуй чорнову роботу.", assignSub: "Визнач, який асистент відповідає за кожну повторювану частину комунікації та роботи.", preview: "Перевір поведінку асистента.", control: "Рівень контролю",
+    controlText: "Кожного асистента можна обмежити доступом до памʼяті, правилами підтвердження та рівнем автономності. Ти вирішуєш, що він може знати, пропонувати або робити.", generate: "Створити чернетку", inputPlaceholder: "Клієнт питає: Можеш сьогодні надіслати фінальну ціну й терміни доставки?",
+    labels: { name:"Імʼя асистента", role:"Роль", description:"Опис", tone:"Тон", personality:"Характер", response:"Стиль відповіді", autonomy:"Рівень автономності", memory:"Доступ до памʼяті", learning:"Навчання", tasks:"Основні завдання", boundaries:"Безпека та межі", sources:"Дозволені джерела даних" },
+    twinWarning: "Altr Twin завжди має залишатися під твоїм контролем. Він може готувати чернетки й пропозиції, але автономні дії повинні вимагати чіткого дозволу.",
+  },
+} as const;
+
+const labels: Record<string, [string,string]> = {
+  exact_match:["Exact match","Точний збіг"], slightly_polished:["Slightly polished","Трохи покращений"], more_professional:["More professional","Більш професійний"], more_concise:["More concise","Більш лаконічний"], warmer:["Warmer","Тепліший"], professional:["Professional","Професійний"], friendly:["Friendly","Дружній"], direct:["Direct","Прямий"], calm:["Calm","Спокійний"], persuasive:["Persuasive","Переконливий"], neutral:["Neutral","Нейтральний"],
+  same_as_me:["Same as me","Як я"], calm_me:["Calm version of me","Спокійна версія мене"], professional_me:["Professional version of me","Професійна версія мене"], direct_me:["Direct version of me","Пряма версія мене"], analyst:["Analyst","Аналітик"], operator:["Operator","Оператор"], negotiator:["Negotiator","Переговорник"], assistant:["Assistant","Асистент"], manager:["Manager","Менеджер"], researcher:["Researcher","Дослідник"],
+  short:["Short","Коротко"], balanced:["Balanced","Збалансовано"], detailed:["Detailed","Детально"], ask_first:["Ask before answering","Запитати перед відповіддю"], suggest_only:["Suggest only","Лише пропонувати"], draft_replies:["Draft replies","Готувати чернетки"], approval_required:["Execute with approval","Виконувати після підтвердження"], trusted_auto:["Trusted tasks automatically","Довірені задачі автоматично"],
+  communication_style:["Communication style","Стиль комунікації"], frequent_phrases:["Frequent phrases","Часті фрази"], relationships:["Relationships","Стосунки"], typical_decisions:["Typical decisions","Типові рішення"], work_context:["Work context","Робочий контекст"], calendar_context:["Calendar context","Контекст календаря"], email_context:["Email context","Контекст email"], client_context:["Client context","Контекст клієнтів"], imported_conversations:["Imported conversations","Імпортовані переписки"], email:["Email","Email"], calendar:["Calendar","Календар"],
+  write_replies:["Write replies","Писати відповіді"], summarize_conversations:["Summarize conversations","Підсумовувати розмови"], prepare_followups:["Prepare follow-ups","Готувати follow-up"], extract_tasks:["Extract tasks","Виділяти задачі"], draft_emails:["Draft emails","Готувати email"], compare_options:["Compare options","Порівнювати варіанти"], prepare_decisions:["Prepare decisions","Готувати рішення"], track_deadlines:["Track deadlines","Стежити за дедлайнами"], create_reports:["Create reports","Створювати звіти"],
+  never_send_without_approval:["Never send without approval","Не надсилати без підтвердження"], never_sensitive_topics:["Never discuss sensitive topics","Не обговорювати чутливі теми"], ask_before_promises:["Ask before making promises","Питати перед обіцянками"], ask_before_prices:["Ask before discussing prices","Питати перед обговоренням цін"], limit_emotion_imitation:["Do not imitate emotions too strongly","Не імітувати емоції надто сильно"], ask_before_sending:["Ask before sending messages","Питати перед надсиланням"], ask_before_decisions:["Ask before making decisions","Питати перед рішеннями"], ask_before_money:["Ask before discussing money","Питати перед обговоренням грошей"], no_personal_messages:["Do not answer personal messages","Не відповідати на особисті повідомлення"], no_sensitive_memory:["Do not use sensitive memory","Не використовувати чутливу памʼять"], no_auto_contact:["Do not contact people automatically","Не контактувати автоматично"],
+};
+
+export function optionLabel(value: string, lang: AssistantsLang) { return labels[value]?.[lang === "EN" ? 0 : 1] ?? value.replaceAll("_", " "); }

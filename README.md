@@ -16,6 +16,8 @@ The AI Memory control center is available at `/memory` with category filters, se
 
 Promo codes can be entered on `/pricing`. The test code `test1` grants the Work plan for 30 days once per local account.
 
+The three-assistant frontend MVP is available at `/assistants`. It includes Altr Twin, Operator, Negotiator, local configuration controls, a capability matrix, behavior simulation, safety controls, and EN/UA interface copy.
+
 Reliable accounts across refreshes, Vercel preview domains, browsers, and devices require server authentication and a database. The current localStorage account prototype is origin-specific and must not be treated as production authentication.
 
 ## Run locally

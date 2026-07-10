@@ -124,6 +124,7 @@ export default function Home() {
                 <p className="mb-5 text-lg tracking-[-0.03em] text-cyan-50/70">{subtitle}</p>
                 <p className="max-w-sm leading-7 text-white/43">{body}</p>
                 {index === 1 && <Link href="/memory" className="mt-7 inline-flex items-center gap-2 text-xs uppercase tracking-[.14em] text-cyan-100/55 transition hover:text-cyan-50">Open Memory <span>→</span></Link>}
+                {index === 2 && <Link href="/assistants" className="mt-7 inline-flex items-center gap-2 text-xs uppercase tracking-[.14em] text-cyan-100/55 transition hover:text-cyan-50">Open Assistants <span>→</span></Link>}
               </article>
             </Reveal>
           ))}

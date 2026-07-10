@@ -1,0 +1,8 @@
+import { Database, Gauge, ShieldCheck } from "lucide-react";
+import { assistantsCopy } from "./copy";
+import { AssistantsLang } from "./types";
+
+export function ControlLayer({ lang }: { lang: AssistantsLang }) {
+  const t=assistantsCopy[lang]; const cards=lang==="EN"?[{title:"Memory Access",text:"Choose exactly which context each assistant can read.",icon:Database},{title:"Approval Rules",text:"Require confirmation before messages, money or decisions.",icon:ShieldCheck},{title:"Autonomy Level",text:"Move from suggestions to trusted automatic tasks gradually.",icon:Gauge}]:[{title:"Доступ до памʼяті",text:"Обери, який саме контекст може читати кожен асистент.",icon:Database},{title:"Правила підтвердження",text:"Вимагай дозвіл перед повідомленнями, грошима чи рішеннями.",icon:ShieldCheck},{title:"Рівень автономності",text:"Переходь від пропозицій до довірених автоматичних задач поступово.",icon:Gauge}];
+  return <section className="assistant-control-layer"><div className="max-w-2xl"><p className="eyebrow">SAFETY SYSTEM</p><h2 className="mt-4 text-4xl font-medium tracking-[-.055em] md:text-6xl">{t.control}</h2><p className="mt-4 leading-7 text-white/38">{t.controlText}</p></div><div className="mt-8 grid gap-4 md:grid-cols-3">{cards.map(({title,text,icon:Icon},index)=><article key={title}><div className="flex items-center justify-between"><span className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-100/[.1] bg-cyan-200/[.04]"><Icon className="h-5 w-5 text-cyan-100/55" /></span><span className="data-label">CTRL 0{index+1}</span></div><h3 className="mt-7 text-xl font-medium">{title}</h3><p className="mt-3 text-sm leading-6 text-white/35">{text}</p></article>)}</div></section>;
+}
