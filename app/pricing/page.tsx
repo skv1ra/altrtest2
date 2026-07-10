@@ -8,19 +8,19 @@ import { useEffect, useState } from "react";
 import { AiMark } from "@/components/Navigation";
 import { AltrProfile, getCurrentProfile, PlanId, updateCurrentProfile } from "@/lib/auth";
 
-const plans: { id: PlanId; name: string; price: number; label: string; description: string; features: string[]; icon: typeof Sparkles; popular?: boolean }[] = [
+const plans: { id: PlanId; name: string; price: number; originalPrice?: number; label: string; description: string; features: string[]; icon: typeof Sparkles; popular?: boolean }[] = [
   {
     id: "free", name: "Безкоштовна", price: 0, label: "FREE", icon: Sparkles,
     description: "Базовий Altr для знайомства з персональною AI-моделлю.",
     features: ["1 джерело даних", "До 25 спогадів", "Базовий тон відповідей", "Ручні чернетки"],
   },
   {
-    id: "personal", name: "Особиста", price: 20, label: "PERSONAL", icon: Zap, popular: true,
+    id: "personal", name: "Особиста", price: 20, originalPrice: 30, label: "PERSONAL", icon: Zap, popular: true,
     description: "Повний персональний Altr для щоденної роботи та комунікації.",
     features: ["Усі особисті джерела", "Розширена памʼять", "Автоматичні чернетки", "Усі стилі тону", "Щотижневі підсумки"],
   },
   {
-    id: "work", name: "Робоча", price: 40, label: "WORK", icon: UsersRound,
+    id: "work", name: "Робоча", price: 40, originalPrice: 60, label: "WORK", icon: UsersRound,
     description: "Максимальні можливості Altr для команд, клієнтів і процесів.",
     features: ["Усе з Особистого плану", "Командний простір", "Робочі інтеграції", "Спільний контекст команди", "Пріоритетна обробка", "Максимальна памʼять"],
   },
@@ -91,7 +91,20 @@ export default function PricingPage() {
                 <p className="data-label mt-7">{plan.label}</p>
                 <h2 className="mt-3 text-3xl font-medium tracking-[-.045em]">{plan.name}</h2>
                 <p className="mt-4 min-h-[72px] text-sm leading-6 text-white/38">{plan.description}</p>
-                <div className="mt-7 flex items-end gap-2"><span className="text-5xl font-medium tracking-[-.06em]">${plan.price}</span><span className="pb-1.5 text-sm text-white/30">{plan.price ? "/ місяць" : "назавжди"}</span></div>
+                <div className="mt-7 flex flex-wrap items-end gap-x-3 gap-y-2">
+                  <span className="text-5xl font-medium tracking-[-.06em]">${plan.price}</span>
+                  {plan.originalPrice && (
+                    <span className="pb-2 text-2xl font-medium tracking-[-.05em] text-white/22 line-through decoration-cyan-100/35 decoration-2">
+                      ${plan.originalPrice}
+                    </span>
+                  )}
+                  <span className="pb-1.5 text-sm text-white/30">{plan.price ? "/ місяць" : "назавжди"}</span>
+                  {plan.originalPrice && (
+                    <span className="mb-1.5 rounded-full border border-cyan-100/15 bg-cyan-200/[.06] px-2.5 py-1 text-[10px] uppercase tracking-[.16em] text-cyan-50/55">
+                      sale
+                    </span>
+                  )}
+                </div>
                 <div className="my-7 h-px bg-white/[.065]" />
                 <ul className="space-y-3.5">{plan.features.map(item => <li key={item} className="flex items-start gap-3 text-sm text-white/55"><Check className="mt-0.5 h-4 w-4 flex-none text-cyan-100/55" />{item}</li>)}</ul>
                 <button onClick={() => choosePlan(plan.id)} disabled={current} className={`${plan.popular ? "future-button" : "glass-button"} mt-auto flex w-full items-center justify-center rounded-full px-5 py-3.5 text-sm disabled:cursor-default disabled:opacity-60`}>
