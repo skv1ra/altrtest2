@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { AiMark } from "@/components/Navigation";
 import { getCurrentProfile, registerAccount, signInAccount } from "@/lib/auth";
+import { LEGAL_VERSION } from "@/lib/legal";
 
 type Mode = "register" | "login";
 
@@ -23,7 +24,9 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [accepted, setAccepted] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedConversations, setAcceptedConversations] = useState(false);
+  const [acceptedMemory, setAcceptedMemory] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -55,15 +58,15 @@ export default function AuthPage() {
       setError("Пароль має містити щонайменше 6 символів.");
       return;
     }
-    if (mode === "register" && !accepted) {
-      setError("Підтвердь умови використання та політику приватності.");
+    if (mode === "register" && (!acceptedTerms || !acceptedConversations || !acceptedMemory)) {
+      setError("Для створення Altr підтвердь усі три окремі згоди.");
       return;
     }
 
     setLoading(true);
     try {
       if (mode === "register") {
-        await registerAccount({ name, email, password });
+        await registerAccount({ name, email, password, policyVersion: LEGAL_VERSION });
       } else {
         await signInAccount(email, password);
       }
@@ -164,13 +167,11 @@ export default function AuthPage() {
                   <span className="auth-input-wrap"><LockKeyhole className="h-4 w-4" /><input value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === "register" ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} placeholder="Мінімум 6 символів" /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Сховати пароль" : "Показати пароль"}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></span>
                 </label>
 
-                {mode === "register" && (
-                  <label className="mt-2 flex cursor-pointer items-start gap-3 text-xs leading-5 text-white/38">
-                    <input className="auth-checkbox sr-only" type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} />
-                    <span className={`checkbox-visual ${accepted ? "checkbox-visual-active" : ""}`}>{accepted && <Check className="h-3 w-3" />}</span>
-                    <span>Я погоджуюсь з умовами використання та політикою приватності Altr.</span>
-                  </label>
-                )}
+                {mode === "register" && <div className="space-y-3 rounded-[1rem] border border-white/[.06] bg-black/10 p-4">
+                  <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-white/42"><input className="sr-only" type="checkbox" checked={acceptedTerms} onChange={e=>setAcceptedTerms(e.target.checked)} /><span className={`checkbox-visual ${acceptedTerms ? "checkbox-visual-active" : ""}`}>{acceptedTerms && <Check className="h-3 w-3" />}</span><span>Я приймаю <Link className="text-cyan-100/65 underline underline-offset-2" href="/terms" target="_blank">Terms of Use</Link> та підтверджую, що прочитав(-ла) <Link className="text-cyan-100/65 underline underline-offset-2" href="/privacy" target="_blank">Privacy Policy</Link>.</span></label>
+                  <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-white/42"><input className="sr-only" type="checkbox" checked={acceptedConversations} onChange={e=>setAcceptedConversations(e.target.checked)} /><span className={`checkbox-visual ${acceptedConversations ? "checkbox-visual-active" : ""}`}>{acceptedConversations && <Check className="h-3 w-3" />}</span><span>Я даю явну згоду на обробку підключених мною переписок, email і повідомлень для роботи функцій Altr. Я можу відкликати згоду та видалити дані.</span></label>
+                  <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-white/42"><input className="sr-only" type="checkbox" checked={acceptedMemory} onChange={e=>setAcceptedMemory(e.target.checked)} /><span className={`checkbox-visual ${acceptedMemory ? "checkbox-visual-active" : ""}`}>{acceptedMemory && <Check className="h-3 w-3" />}</span><span>Я даю явну згоду на створення персональної AI-памʼяті: моделі тону, контексту, рішень і звʼязків на основі наданих мною даних.</span></label>
+                </div>}
 
                 <AnimatePresence>
                   {error && <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="alert" className="rounded-xl border border-red-300/10 bg-red-400/[.06] px-4 py-3 text-sm text-red-100/75">{error}</motion.p>}

@@ -33,6 +33,12 @@ export type AltrProfile = {
     weeklyDigest: boolean;
     privacyMode: boolean;
   };
+  consents: {
+    policyVersion: string;
+    termsAcceptedAt: string;
+    conversationProcessingAcceptedAt: string;
+    aiMemoryAcceptedAt: string;
+  };
 };
 
 type StoredAccount = {
@@ -81,7 +87,7 @@ export function getCurrentProfile(): AltrProfile | null {
   if (index < 0) return null;
 
   const stored = accounts[index].profile;
-  if (!("plan" in stored) || !("workspace" in stored.connections)) {
+  if (!("plan" in stored) || !("workspace" in stored.connections) || !("consents" in stored)) {
     const profile: AltrProfile = {
       ...stored,
       plan: (stored as AltrProfile).plan ?? "free",
@@ -92,6 +98,7 @@ export function getCurrentProfile(): AltrProfile | null {
         workspace: stored.connections.workspace ?? false,
       },
       preferences: { ...stored.preferences, autoDrafts: false, weeklyDigest: false },
+      consents: (stored as AltrProfile).consents ?? { policyVersion: "", termsAcceptedAt: "", conversationProcessingAcceptedAt: "", aiMemoryAcceptedAt: "" },
     };
     accounts[index] = { ...accounts[index], profile };
     writeAccounts(accounts);
@@ -101,7 +108,7 @@ export function getCurrentProfile(): AltrProfile | null {
   return stored;
 }
 
-export async function registerAccount(input: { name: string; email: string; password: string }) {
+export async function registerAccount(input: { name: string; email: string; password: string; policyVersion: string }) {
   const accounts = readAccounts();
   const email = input.email.trim().toLowerCase();
 
@@ -126,6 +133,7 @@ export async function registerAccount(input: { name: string; email: string; pass
     stats: { conversations: 0, memories: 3, drafts: 0 },
     connections: { email: false, calendar: false, messages: false, workspace: false },
     preferences: { learning: true, autoDrafts: false, weeklyDigest: false, privacyMode: true },
+    consents: { policyVersion: input.policyVersion, termsAcceptedAt: now, conversationProcessingAcceptedAt: now, aiMemoryAcceptedAt: now },
   };
 
   accounts.push({ profile, passwordHash: await hashPassword(input.password) });

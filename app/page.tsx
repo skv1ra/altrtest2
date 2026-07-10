@@ -157,7 +157,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm text-white/35 sm:grid-cols-4">
             <a className="footer-link" href="#product">{t.footer.product}</a><a className="footer-link" href="#how">{t.footer.how}</a><a className="footer-link" href="#memory">{t.footer.memory}</a><a className="footer-link" href="#vision">{t.footer.vision}</a>
-            <a className="footer-link" href="https://x.com">X</a><a className="footer-link" href="https://github.com">GitHub</a><a className="footer-link" href="#">{t.footer.privacy}</a><a className="footer-link" href="#">{t.footer.terms}</a>
+            <a className="footer-link" href="https://x.com">X</a><a className="footer-link" href="https://github.com">GitHub</a><a className="footer-link" href="/privacy">{t.footer.privacy}</a><a className="footer-link" href="/terms">{t.footer.terms}</a><a className="footer-link" href="/cookies">Cookies</a><a className="footer-link" href="/data-deletion">Data deletion</a>
           </div>
           <p className="text-sm text-white/28 md:text-right">© 2026 Altr</p>
         </div>

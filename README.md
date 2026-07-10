@@ -8,6 +8,8 @@ The landing-page CTA and profile button open registration/sign-in. After sign-in
 
 Every new account starts on the Free plan. Premium dashboard actions redirect to `/pricing`, where users can choose Free ($0), Personal ($20/month), or Work ($40/month). Plan changes are also stored in the current browser for this prototype.
 
+Legal pages are available at `/privacy`, `/terms`, `/cookies`, `/data-deletion`, and `/data-deletion/request`. Complete every item in `LEGAL_SETUP.md` before a public production launch.
+
 ## Run locally
 
 ```bash

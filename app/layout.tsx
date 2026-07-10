@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CookieBanner } from "@/components/CookieBanner";
 
 export const metadata: Metadata = {
   title: "Altr — Become impossible to replace",
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="bg-ink">
-      <body className="noise antialiased">{children}</body>
+      <body className="noise antialiased">{children}<CookieBanner /></body>
     </html>
   );
 }
