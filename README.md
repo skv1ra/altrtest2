@@ -2,6 +2,10 @@
 
 Premium near-future AI landing page for Altr.
 
+## Account flow
+
+The landing-page CTA and profile button open registration/sign-in. After sign-in, users are sent to a private dashboard with their Altr profile, learning data, connections, and settings. This prototype stores accounts and sessions in the current browser so the whole flow works without external credentials. Connect a hosted authentication provider and database before a production launch.
+
 ## Run locally
 
 ```bash
