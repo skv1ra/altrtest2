@@ -5,8 +5,9 @@ import { UserRound } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getCurrentProfile } from "@/lib/auth";
+import { setStoredLanguage, type Lang } from "@/lib/i18n/lang-store";
 
-export type Lang = "EN" | "UA";
+export type { Lang };
 
 const labels = {
   EN: { product: "Product", how: "How it works", memory: "Memory", vision: "Vision", profile: "Profile" },
@@ -20,6 +21,7 @@ export function AiMark() {
 export function Navigation({ lang, setLang }: { lang: Lang; setLang: (lang: Lang) => void }) {
   const t = labels[lang];
   const [signedIn, setSignedIn] = useState(false);
+  const chooseLanguage = (next: Lang) => { setStoredLanguage(next); setLang(next); };
 
   useEffect(() => {
     const syncSession = () => setSignedIn(Boolean(getCurrentProfile()));
@@ -51,9 +53,9 @@ export function Navigation({ lang, setLang }: { lang: Lang; setLang: (lang: Lang
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm tracking-[0.08em]">
-            <button onClick={() => setLang("EN")} className={`language-link ${lang === "EN" ? "text-cyan-100" : "text-white/34"}`}>EN</button>
+            <button onClick={() => chooseLanguage("EN")} className={`language-link ${lang === "EN" ? "text-cyan-100" : "text-white/34"}`}>EN</button>
             <span className="text-white/16">/</span>
-            <button onClick={() => setLang("UA")} className={`language-link ${lang === "UA" ? "text-cyan-100" : "text-white/34"}`}>UA</button>
+            <button onClick={() => chooseLanguage("UA")} className={`language-link ${lang === "UA" ? "text-cyan-100" : "text-white/34"}`}>UA</button>
           </div>
           <span className="hidden h-5 w-px bg-white/[.08] sm:block" />
           <Link

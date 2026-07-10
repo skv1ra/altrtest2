@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { HeroOrb } from "@/components/HeroOrb";
 import { InteractiveDemo } from "@/components/InteractiveDemo";
-import { AiMark, Navigation, type Lang } from "@/components/Navigation";
+import { AiMark, Navigation } from "@/components/Navigation";
 import { Reveal } from "@/components/Reveal";
+import { CookiePreferencesButton } from "@/components/legal/CookiePreferencesButton";
+import { useLang } from "@/lib/i18n/lang-store";
 
 const copy = {
   EN: {
@@ -26,7 +27,7 @@ const copy = {
     features: ["Tone fingerprint", "Decision memory", "Client context", "Email continuity", "Team workflows", "Autonomous drafts"],
     finalTitle: "Your routine is not your identity.",
     finalSubtitle: "Let Altr handle the patterns — so you can focus on what matters.",
-    footer: { product: "Product", how: "How it works", memory: "Memory", vision: "Vision", privacy: "Privacy", terms: "Terms", status: "All systems learning" },
+    footer: { product: "Product", how: "How it works", memory: "Memory", vision: "Vision", privacy: "Privacy", terms: "Terms", cookies: "Cookies", deletion: "Data deletion", deleteData: "Delete my data", cookiePrefs: "Cookie Preferences", status: "All systems learning" },
   },
   UA: {
     eyebrow: "Інтерфейс активації персонального AI",
@@ -46,7 +47,7 @@ const copy = {
     features: ["Відбиток тону", "Памʼять рішень", "Контекст клієнтів", "Email continuity", "Командні процеси", "Автономні чернетки"],
     finalTitle: "Твоя рутина — це не твоя особистість.",
     finalSubtitle: "Дозволь Altr взяти на себе повторювані патерни — щоб ти міг фокусуватись на важливому.",
-    footer: { product: "Продукт", how: "Як працює", memory: "Памʼять", vision: "Візія", privacy: "Privacy", terms: "Terms", status: "Усі системи навчаються" },
+    footer: { product: "Продукт", how: "Як працює", memory: "Памʼять", vision: "Візія", privacy: "Приватність", terms: "Умови", cookies: "Cookie", deletion: "Видалення даних", deleteData: "Видалити мої дані", cookiePrefs: "Налаштування cookie", status: "Усі системи навчаються" },
   },
 } as const;
 
@@ -64,7 +65,7 @@ function SecondaryButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
-  const [lang, setLang] = useState<Lang>("EN");
+  const [lang, setLang] = useLang("EN");
   const t = copy[lang];
 
   return (
@@ -157,7 +158,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm text-white/35 sm:grid-cols-4">
             <a className="footer-link" href="#product">{t.footer.product}</a><a className="footer-link" href="#how">{t.footer.how}</a><a className="footer-link" href="#memory">{t.footer.memory}</a><a className="footer-link" href="#vision">{t.footer.vision}</a>
-            <a className="footer-link" href="https://x.com">X</a><a className="footer-link" href="https://github.com">GitHub</a><a className="footer-link" href="#">{t.footer.privacy}</a><a className="footer-link" href="#">{t.footer.terms}</a>
+            <a className="footer-link" href="https://x.com" rel="noreferrer">X</a><a className="footer-link" href="https://github.com" rel="noreferrer">GitHub</a><a className="footer-link" href="/privacy">{t.footer.privacy}</a><a className="footer-link" href="/terms">{t.footer.terms}</a><a className="footer-link" href="/cookies">{t.footer.cookies}</a><a className="footer-link" href="/data-deletion">{t.footer.deletion}</a><a className="footer-link" href="/delete-data">{t.footer.deleteData}</a><CookiePreferencesButton className="footer-link text-left">{t.footer.cookiePrefs}</CookiePreferencesButton>
           </div>
           <p className="text-sm text-white/28 md:text-right">© 2026 Altr</p>
         </div>
