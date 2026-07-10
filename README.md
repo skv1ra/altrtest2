@@ -1,15 +1,6 @@
-# Altr Landing Page
+# Altr landing page
 
-Premium dark landing page for **Altr** — an AI twin that learns how a person thinks, decides and communicates.
-
-## Stack
-
-- Next.js 15
-- React
-- TypeScript
-- TailwindCSS
-- Framer Motion
-- Lucide Icons
+Premium near-future AI landing page for Altr.
 
 ## Run locally
 
@@ -18,14 +9,6 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+## Deploy
 
-## Deploy to Vercel
-
-1. Push this folder to GitHub.
-2. Import the repository in Vercel.
-3. Keep defaults and click Deploy.
-
-## Notes
-
-The waitlist form is visual-only. Connect it to Resend, Supabase, Airtable, Formspree, ConvertKit or your own API route when you are ready to collect emails.
+Push the project root to GitHub and import it into Vercel. The root must contain `app`, `components`, `package.json`, `next.config.js`, and Tailwind config files.
