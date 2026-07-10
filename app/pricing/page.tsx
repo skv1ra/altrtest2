@@ -1,12 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, LockKeyhole, Sparkles, UsersRound, Zap } from "lucide-react";
+import { ArrowLeft, Check, Gift, LockKeyhole, Sparkles, UsersRound, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { AiMark } from "@/components/Navigation";
-import { AltrProfile, getCurrentProfile, PlanId, updateCurrentProfile } from "@/lib/auth";
+import { AltrProfile, getCurrentProfile, PlanId, redeemPromoCode, updateCurrentProfile } from "@/lib/auth";
 
 const plans: { id: PlanId; name: string; price: number; originalPrice?: number; label: string; description: string; features: string[]; icon: typeof Sparkles; popular?: boolean }[] = [
   {
@@ -29,6 +29,8 @@ const plans: { id: PlanId; name: string; price: number; originalPrice?: number; 
 const featureNames: Record<string, string> = {
   calendar: "підключення календаря", messages: "підключення повідомлень", workspace: "командний простір",
   tone: "розширені стилі тону", drafts: "автоматичні чернетки", digest: "щотижневий підсумок",
+  "import-telegram": "імпорт Telegram", "import-gmail": "імпорт Gmail / Google Takeout", "import-whatsapp": "імпорт WhatsApp",
+  "import-instagram": "імпорт Instagram", "import-messenger": "імпорт Messenger", "import-limit": "додаткові імпорти",
 };
 
 export default function PricingPage() {
@@ -36,6 +38,9 @@ export default function PricingPage() {
   const [profile, setProfile] = useState<AltrProfile | null>(null);
   const [feature, setFeature] = useState("");
   const [changed, setChanged] = useState<PlanId | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoMessage, setPromoMessage] = useState("");
+  const [promoError, setPromoError] = useState("");
 
   useEffect(() => {
     setProfile(getCurrentProfile());
@@ -48,7 +53,7 @@ export default function PricingPage() {
       return;
     }
 
-    const update: Partial<AltrProfile> = { plan };
+    const update: Partial<AltrProfile> = { plan, promo: undefined };
     if (plan === "free") {
       update.tone = "balanced";
       update.connections = { ...profile.connections, calendar: false, messages: false, workspace: false };
@@ -59,6 +64,19 @@ export default function PricingPage() {
     if (next) setProfile(next);
     setChanged(plan);
     window.setTimeout(() => setChanged(null), 2200);
+  };
+
+  const applyPromo = (event: FormEvent) => {
+    event.preventDefault(); setPromoError(""); setPromoMessage("");
+    if (!profile) { router.push("/auth?mode=register"); return; }
+    try {
+      const next = redeemPromoCode(promoCode);
+      if (next) setProfile(next);
+      setPromoMessage("Промокод активовано: Work безкоштовно на 30 днів."); setPromoCode("");
+    } catch (promoIssue) {
+      const code = promoIssue instanceof Error ? promoIssue.message : "";
+      setPromoError(code === "PROMO_USED" ? "Цей промокод уже використаний у вашому акаунті." : "Промокод не знайдено або він більше не діє.");
+    }
   };
 
   return (
@@ -79,6 +97,8 @@ export default function PricingPage() {
         </motion.div>
 
         {feature && <div className="mx-auto mt-8 flex w-fit items-center gap-2 rounded-full border border-cyan-100/[.1] bg-cyan-200/[.04] px-4 py-2 text-sm text-cyan-50/60"><LockKeyhole className="h-4 w-4" />Для функції «{featureNames[feature] ?? "преміальна можливість"}» потрібен вищий план</div>}
+
+        <form onSubmit={applyPromo} className="promo-panel mx-auto mt-8 max-w-2xl rounded-[1.5rem] p-5 text-left sm:p-6"><div className="flex items-start gap-4"><span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-cyan-100/[.1] bg-cyan-200/[.04]"><Gift className="h-5 w-5 text-cyan-100/60" /></span><div className="min-w-0 flex-1"><h2 className="text-lg font-medium">Маєте промокод?</h2><p className="mt-1 text-xs leading-5 text-white/32">Активуйте подарунковий або пробний план для цього акаунта.</p><div className="mt-4 flex flex-col gap-2 sm:flex-row"><input value={promoCode} onChange={event=>setPromoCode(event.target.value)} className="promo-input" placeholder="Введіть промокод" autoComplete="off" /><button className="future-button rounded-full px-5 py-3 text-xs">Активувати</button></div>{promoMessage&&<p className="mt-3 text-xs text-cyan-100/65">{promoMessage}</p>}{promoError&&<p className="mt-3 text-xs text-red-100/70">{promoError}</p>}{profile?.promo&&<p className="mt-3 text-xs text-white/32">Активний код: <span className="text-white/55">{profile.promo.code}</span> · до {new Date(profile.promo.expiresAt).toLocaleDateString("uk-UA")}</p>}</div></div></form>
 
         <div className="mt-12 grid gap-4 text-left lg:grid-cols-3">
           {plans.map((plan, index) => {

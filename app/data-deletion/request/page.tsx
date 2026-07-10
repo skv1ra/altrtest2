@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { AiMark } from "@/components/Navigation";
 import { deleteCurrentAccount, getCurrentProfile, updateCurrentProfile } from "@/lib/auth";
+import { deleteAllConversationImports } from "@/lib/conversationImports";
 import { legalConfig } from "@/lib/legal";
 
 type Scope = "all" | "account" | "conversations" | "memory";
@@ -33,7 +34,7 @@ export default function DeletionRequestPage() {
     const profile = getCurrentProfile();
     if (profile?.email.toLowerCase() === record.email) {
       if (scope === "all" || scope === "account") deleteCurrentAccount();
-      if (scope === "conversations") updateCurrentProfile({ stats: { ...profile.stats, conversations: 0, drafts: 0 } });
+      if (scope === "conversations") { deleteAllConversationImports(profile.id); updateCurrentProfile({ stats: { ...profile.stats, conversations: 0, drafts: 0 } }); }
       if (scope === "memory") updateCurrentProfile({ trainingProgress: 0, stats: { ...profile.stats, memories: 0 } });
     }
     setRequestId(id);

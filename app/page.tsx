@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Link from "next/link";
 import { HeroOrb } from "@/components/HeroOrb";
 import { InteractiveDemo } from "@/components/InteractiveDemo";
 import { AiMark, Navigation, type Lang } from "@/components/Navigation";
@@ -122,6 +123,7 @@ export default function Home() {
                 <h3 id={index === 1 ? "memory" : index === 2 ? "vision" : undefined} className="mb-4 text-2xl font-medium tracking-[-0.04em] text-white">{title}</h3>
                 <p className="mb-5 text-lg tracking-[-0.03em] text-cyan-50/70">{subtitle}</p>
                 <p className="max-w-sm leading-7 text-white/43">{body}</p>
+                {index === 1 && <Link href="/memory" className="mt-7 inline-flex items-center gap-2 text-xs uppercase tracking-[.14em] text-cyan-100/55 transition hover:text-cyan-50">Open Memory <span>→</span></Link>}
               </article>
             </Reveal>
           ))}

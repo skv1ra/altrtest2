@@ -10,6 +10,14 @@ Every new account starts on the Free plan. Premium dashboard actions redirect to
 
 Legal pages are available at `/privacy`, `/terms`, `/cookies`, `/data-deletion`, and `/data-deletion/request`. Complete every item in `LEGAL_SETUP.md` before a public production launch.
 
+Conversation imports are available at `/import-conversations`. The browser-local prototype parses manual JSON/TXT/HTML/CSV files, Telegram exports, Gmail/Google Takeout MBOX, WhatsApp TXT, Instagram/Messenger JSON, and supported files inside ZIP archives. Import history and preview snippets remain on the current device until deleted.
+
+The AI Memory control center is available at `/memory` with category filters, search, edit/delete controls, pause/resume learning, clear-all confirmation, and data-source placeholders. Its MVP data uses local React state as requested.
+
+Promo codes can be entered on `/pricing`. The test code `test1` grants the Work plan for 30 days once per local account.
+
+Reliable accounts across refreshes, Vercel preview domains, browsers, and devices require server authentication and a database. The current localStorage account prototype is origin-specific and must not be treated as production authentication.
+
 ## Run locally
 
 ```bash

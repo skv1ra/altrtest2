@@ -39,6 +39,14 @@ export type AltrProfile = {
     conversationProcessingAcceptedAt: string;
     aiMemoryAcceptedAt: string;
   };
+  promo?: {
+    code: string;
+    previousPlan: PlanId;
+    grantedPlan: PlanId;
+    redeemedAt: string;
+    expiresAt: string;
+  };
+  redeemedPromoCodes?: string[];
 };
 
 type StoredAccount = {
@@ -87,6 +95,12 @@ export function getCurrentProfile(): AltrProfile | null {
   if (index < 0) return null;
 
   const stored = accounts[index].profile;
+  if (stored.promo && new Date(stored.promo.expiresAt).getTime() <= Date.now()) {
+    const profile: AltrProfile = { ...stored, plan: stored.promo.previousPlan, promo: undefined };
+    accounts[index] = { ...accounts[index], profile };
+    writeAccounts(accounts);
+    return profile;
+  }
   if (!("plan" in stored) || !("workspace" in stored.connections) || !("consents" in stored)) {
     const profile: AltrProfile = {
       ...stored,
@@ -134,6 +148,7 @@ export async function registerAccount(input: { name: string; email: string; pass
     connections: { email: false, calendar: false, messages: false, workspace: false },
     preferences: { learning: true, autoDrafts: false, weeklyDigest: false, privacyMode: true },
     consents: { policyVersion: input.policyVersion, termsAcceptedAt: now, conversationProcessingAcceptedAt: now, aiMemoryAcceptedAt: now },
+    redeemedPromoCodes: [],
   };
 
   accounts.push({ profile, passwordHash: await hashPassword(input.password) });
@@ -179,6 +194,21 @@ export function updateCurrentProfile(update: Partial<AltrProfile>) {
   return profile;
 }
 
+export function redeemPromoCode(codeInput: string) {
+  const profile = getCurrentProfile();
+  if (!profile) throw new Error("NOT_SIGNED_IN");
+  const code = codeInput.trim().toLowerCase();
+  if (code !== "test1") throw new Error("INVALID_PROMO");
+  if (profile.redeemedPromoCodes?.includes(code)) throw new Error("PROMO_USED");
+  const redeemedAt = new Date();
+  const expiresAt = new Date(redeemedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+  return updateCurrentProfile({
+    plan: "work",
+    promo: { code, previousPlan: profile.plan, grantedPlan: "work", redeemedAt: redeemedAt.toISOString(), expiresAt: expiresAt.toISOString() },
+    redeemedPromoCodes: [...(profile.redeemedPromoCodes ?? []), code],
+  });
+}
+
 export function signOutAccount() {
   if (!canUseStorage()) return;
   window.localStorage.removeItem(SESSION_KEY);
@@ -189,6 +219,10 @@ export function deleteCurrentAccount() {
   const current = getCurrentProfile();
   if (!current) return;
   writeAccounts(readAccounts().filter((account) => account.profile.id !== current.id));
+  try {
+    const imports = JSON.parse(window.localStorage.getItem("altr_conversation_imports_v1") ?? "[]") as { userId?: string }[];
+    window.localStorage.setItem("altr_conversation_imports_v1", JSON.stringify(imports.filter(record => record.userId !== current.id)));
+  } catch { window.localStorage.removeItem("altr_conversation_imports_v1"); }
   window.localStorage.removeItem(SESSION_KEY);
   window.dispatchEvent(new Event("altr-auth-change"));
 }

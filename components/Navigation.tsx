@@ -46,7 +46,7 @@ export function Navigation({ lang, setLang }: { lang: Lang; setLang: (lang: Lang
         <div className="hidden items-center gap-7 md:flex">
           <a href="#product" className="nav-link">{t.product}</a>
           <a href="#how" className="nav-link">{t.how}</a>
-          <a href="#memory" className="nav-link">{t.memory}</a>
+          <Link href="/memory" className="nav-link">{t.memory}</Link>
           <a href="#vision" className="nav-link">{t.vision}</a>
         </div>
         <div className="flex items-center gap-3">
