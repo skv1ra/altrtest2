@@ -1,4 +1,8 @@
 export type ToneMode = "balanced" | "warm" | "direct" | "formal";
+export type PlanId = "free" | "personal" | "work";
+
+export const planRank: Record<PlanId, number> = { free: 0, personal: 1, work: 2 };
+export const hasPlanAccess = (current: PlanId, required: PlanId) => planRank[current] >= planRank[required];
 
 export type AltrProfile = {
   id: string;
@@ -9,6 +13,7 @@ export type AltrProfile = {
   bio: string;
   createdAt: string;
   updatedAt: string;
+  plan: PlanId;
   trainingProgress: number;
   tone: ToneMode;
   stats: {
@@ -20,6 +25,7 @@ export type AltrProfile = {
     email: boolean;
     calendar: boolean;
     messages: boolean;
+    workspace: boolean;
   };
   preferences: {
     learning: boolean;
@@ -70,7 +76,24 @@ export function getCurrentProfile(): AltrProfile | null {
   if (!canUseStorage()) return null;
   const sessionId = window.localStorage.getItem(SESSION_KEY);
   if (!sessionId) return null;
-  return readAccounts().find((account) => account.profile.id === sessionId)?.profile ?? null;
+  const accounts = readAccounts();
+  const index = accounts.findIndex((account) => account.profile.id === sessionId);
+  if (index < 0) return null;
+
+  const stored = accounts[index].profile;
+  if (!("plan" in stored) || !("workspace" in stored.connections)) {
+    const profile: AltrProfile = {
+      ...stored,
+      plan: (stored as AltrProfile).plan ?? "free",
+      connections: { email: false, calendar: false, messages: false, ...stored.connections, workspace: false },
+      preferences: { ...stored.preferences, autoDrafts: false, weeklyDigest: false },
+    };
+    accounts[index] = { ...accounts[index], profile };
+    writeAccounts(accounts);
+    return profile;
+  }
+
+  return stored;
 }
 
 export async function registerAccount(input: { name: string; email: string; password: string }) {
@@ -92,11 +115,12 @@ export async function registerAccount(input: { name: string; email: string; pass
     bio: "Altr вивчає мій стиль спілкування, рішення та робочий контекст.",
     createdAt: now,
     updatedAt: now,
+    plan: "free",
     trainingProgress: 18,
     tone: "balanced",
     stats: { conversations: 0, memories: 3, drafts: 0 },
-    connections: { email: false, calendar: false, messages: false },
-    preferences: { learning: true, autoDrafts: true, weeklyDigest: true, privacyMode: true },
+    connections: { email: false, calendar: false, messages: false, workspace: false },
+    preferences: { learning: true, autoDrafts: false, weeklyDigest: false, privacyMode: true },
   };
 
   accounts.push({ profile, passwordHash: await hashPassword(input.password) });
