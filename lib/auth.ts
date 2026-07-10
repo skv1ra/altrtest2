@@ -85,7 +85,12 @@ export function getCurrentProfile(): AltrProfile | null {
     const profile: AltrProfile = {
       ...stored,
       plan: (stored as AltrProfile).plan ?? "free",
-      connections: { email: false, calendar: false, messages: false, ...stored.connections, workspace: false },
+      connections: {
+        email: stored.connections.email ?? false,
+        calendar: stored.connections.calendar ?? false,
+        messages: stored.connections.messages ?? false,
+        workspace: stored.connections.workspace ?? false,
+      },
       preferences: { ...stored.preferences, autoDrafts: false, weeklyDigest: false },
     };
     accounts[index] = { ...accounts[index], profile };
