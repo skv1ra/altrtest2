@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const appUrl = getAppUrl();
     const description = `Altr ${plan.name} subscription — 30 days${autoRenew ? " with auto-renewal" : ""}`;
 
-    const payload = {
+    const payload: Record<string, string | number> = {
       version: 3,
       public_key: publicKey,
       action: autoRenew ? "subscribe" : "pay",
@@ -43,10 +43,16 @@ export async function POST(request: NextRequest) {
       order_id: orderId,
       result_url: `${appUrl}/payment/success?order_id=${encodeURIComponent(orderId)}&plan=${plan.id}`,
       server_url: `${appUrl}/api/payments/liqpay/callback`,
-      customer: email,
-      subscribe: autoRenew ? 1 : undefined,
-      subscribe_periodicity: autoRenew ? "month" : undefined,
     };
+
+    if (email) {
+      payload.customer = email;
+    }
+
+    if (autoRenew) {
+      payload.subscribe = 1;
+      payload.subscribe_periodicity = "month";
+    }
 
     if (isSupabaseConfigured()) {
       await upsertProfile(email);
