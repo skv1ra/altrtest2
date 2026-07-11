@@ -3,6 +3,30 @@ export type PlanId = "free" | "personal" | "work";
 
 export const planRank: Record<PlanId, number> = { free: 0, personal: 1, work: 2 };
 export const hasPlanAccess = (current: PlanId, required: PlanId) => planRank[current] >= planRank[required];
+export const isSubscriptionActive = (profile: AltrProfile | null) => Boolean(profile?.subscription?.status === "active" && new Date(profile.subscription.expiresAt).getTime() > Date.now());
+
+export type BillingSubscription = {
+  status: "inactive" | "active" | "past_due" | "cancelled";
+  plan: PlanId;
+  startedAt: string;
+  expiresAt: string;
+  autoRenew: boolean;
+  provider: "liqpay" | "promo" | "manual";
+  orderId?: string;
+  subscriptionId?: string;
+};
+
+export type BillingInvoice = {
+  id: string;
+  orderId: string;
+  plan: PlanId;
+  amount: number;
+  currency: string;
+  status: "paid" | "pending" | "failed";
+  createdAt: string;
+  paidAt?: string;
+  receiptUrl?: string;
+};
 
 export type AltrProfile = {
   id: string;
@@ -47,6 +71,8 @@ export type AltrProfile = {
     expiresAt: string;
   };
   redeemedPromoCodes?: string[];
+  subscription?: BillingSubscription;
+  invoices?: BillingInvoice[];
 };
 
 type StoredAccount = {
@@ -101,6 +127,13 @@ export function getCurrentProfile(): AltrProfile | null {
     writeAccounts(accounts);
     return profile;
   }
+  if (stored.subscription && stored.subscription.status === "active" && new Date(stored.subscription.expiresAt).getTime() <= Date.now()) {
+    const profile: AltrProfile = { ...stored, plan: "free", subscription: { ...stored.subscription, status: "past_due" } };
+    accounts[index] = { ...accounts[index], profile };
+    writeAccounts(accounts);
+    return profile;
+  }
+
   if (!("plan" in stored) || !("workspace" in stored.connections) || !("consents" in stored)) {
     const profile: AltrProfile = {
       ...stored,
@@ -113,6 +146,7 @@ export function getCurrentProfile(): AltrProfile | null {
       },
       preferences: { ...stored.preferences, autoDrafts: false, weeklyDigest: false },
       consents: (stored as AltrProfile).consents ?? { policyVersion: "", termsAcceptedAt: "", conversationProcessingAcceptedAt: "", aiMemoryAcceptedAt: "" },
+      invoices: (stored as AltrProfile).invoices ?? [],
     };
     accounts[index] = { ...accounts[index], profile };
     writeAccounts(accounts);
@@ -149,6 +183,7 @@ export async function registerAccount(input: { name: string; email: string; pass
     preferences: { learning: true, autoDrafts: false, weeklyDigest: false, privacyMode: true },
     consents: { policyVersion: input.policyVersion, termsAcceptedAt: now, conversationProcessingAcceptedAt: now, aiMemoryAcceptedAt: now },
     redeemedPromoCodes: [],
+    invoices: [],
   };
 
   accounts.push({ profile, passwordHash: await hashPassword(input.password) });
@@ -185,6 +220,8 @@ export function updateCurrentProfile(update: Partial<AltrProfile>) {
     stats: update.stats ?? accounts[index].profile.stats,
     connections: update.connections ?? accounts[index].profile.connections,
     preferences: update.preferences ?? accounts[index].profile.preferences,
+    subscription: update.subscription ?? accounts[index].profile.subscription,
+    invoices: update.invoices ?? accounts[index].profile.invoices,
     updatedAt: new Date().toISOString(),
   };
 
@@ -225,4 +262,40 @@ export function deleteCurrentAccount() {
   } catch { window.localStorage.removeItem("altr_conversation_imports_v1"); }
   window.localStorage.removeItem(SESSION_KEY);
   window.dispatchEvent(new Event("altr-auth-change"));
+}
+
+
+export function activatePaidSubscription(input: { plan: PlanId; orderId: string; amount: number; currency: string; autoRenew?: boolean }) {
+  const profile = getCurrentProfile();
+  if (!profile) return null;
+  if (input.plan === "free") return updateCurrentProfile({ plan: "free", subscription: undefined });
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const invoices = profile.invoices ?? [];
+  const invoiceExists = invoices.some((invoice) => invoice.orderId === input.orderId);
+
+  return updateCurrentProfile({
+    plan: input.plan,
+    subscription: {
+      status: "active",
+      plan: input.plan,
+      startedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      autoRenew: input.autoRenew ?? true,
+      provider: "liqpay",
+      orderId: input.orderId,
+    },
+    invoices: invoiceExists ? invoices : [{
+      id: `inv_${input.orderId}`,
+      orderId: input.orderId,
+      plan: input.plan,
+      amount: input.amount,
+      currency: input.currency,
+      status: "paid",
+      createdAt: now.toISOString(),
+      paidAt: now.toISOString(),
+      receiptUrl: `/payment/receipt/${input.orderId}`,
+    }, ...invoices],
+  });
 }

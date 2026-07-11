@@ -9,8 +9,8 @@ import { getCurrentProfile } from "@/lib/auth";
 export type Lang = "EN" | "UA";
 
 const labels = {
-  EN: { product: "Product", how: "How it works", memory: "Memory", assistants: "Assistants", vision: "Vision", profile: "Profile" },
-  UA: { product: "Продукт", how: "Як працює", memory: "Памʼять", assistants: "Асистенти", vision: "Візія", profile: "Профіль" },
+  EN: { product: "Product", how: "How it works", memory: "Memory", assistants: "Assistants", vision: "Vision", pricing: "Pricing", profile: "Profile" },
+  UA: { product: "Продукт", how: "Як працює", memory: "Памʼять", assistants: "Асистенти", vision: "Візія", pricing: "Тарифи", profile: "Профіль" },
 };
 
 export function AiMark() {
@@ -48,6 +48,7 @@ export function Navigation({ lang, setLang }: { lang: Lang; setLang: (lang: Lang
           <a href="#how" className="nav-link">{t.how}</a>
           <Link href="/memory" className="nav-link">{t.memory}</Link>
           <Link href="/assistants" className="nav-link">{t.assistants}</Link>
+          <Link href="/pricing" className="nav-link">{t.pricing}</Link>
           <a href="#vision" className="nav-link">{t.vision}</a>
         </div>
         <div className="flex items-center gap-3">
