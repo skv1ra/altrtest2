@@ -1,0 +1,55 @@
+name: Phase 0 Dependency Lock
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  lock-dependencies:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22
+
+      - name: Add Phase 0 development dependencies
+        run: >-
+          yarn add --dev
+          vitest
+          vite
+          @vitejs/plugin-react
+          @testing-library/react
+          @testing-library/jest-dom
+          @testing-library/user-event
+          jsdom
+          @playwright/test
+          prettier
+
+      - name: Commit lockfile and dependency manifest
+        shell: bash
+        run: |
+          if git diff --quiet -- package.json yarn.lock; then
+            echo "Dependency manifest is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json yarn.lock
+          git commit -m "chore: add phase 0 test and formatting tools"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
