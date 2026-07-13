@@ -39,4 +39,18 @@ test("draft route treats imported content as untrusted and draft-only", () => {
   assert.match(route, /untrusted data/);
   assert.match(route, /draft replies/i);
   assert.equal(route.includes("sendEmail"), false);
+  assert.equal(route.includes("fallback-template"), false);
+  assert.match(route, /OPENAI_API_KEY_REQUIRED_FOR_DRAFTS/);
+});
+
+test("memory UI uses server API rather than static demo memories", () => {
+  const page = read("app/memory/page.tsx");
+  assert.match(page, /\/api\/memories/);
+  assert.equal(page.includes("initialMemoryItems"), false);
+});
+
+test("legacy import helper no longer writes browser storage", () => {
+  const helper = read("lib/conversationImports.ts");
+  assert.equal(helper.includes("localStorage"), false);
+  assert.match(helper, /Legacy browser import storage is disabled/);
 });
