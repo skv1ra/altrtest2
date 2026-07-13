@@ -1,0 +1,84 @@
+name: Phase 0 Baseline
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    name: Capture existing repository state
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use current Vercel Node major
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22
+
+      - name: Capture repository inventory and existing checks
+        shell: bash
+        run: |
+          set +e
+          mkdir -p phase0-baseline/logs
+
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "node=$(node --version)"
+            echo "yarn=$(yarn --version)"
+            echo "runner=${RUNNER_OS}"
+            echo "captured_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > phase0-baseline/environment.txt
+
+          find . \
+            -path './.git' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './.next' -prune -o \
+            -type f -print \
+            | sed 's#^./##' \
+            | sort > phase0-baseline/repository-files.txt
+
+          run_and_record() {
+            name="$1"
+            shift
+            echo "Running: $*"
+            "$@" > "phase0-baseline/logs/${name}.log" 2>&1
+            code=$?
+            printf '%s=%s\n' "$name" "$code" >> phase0-baseline/exit-codes.txt
+            return 0
+          }
+
+          run_and_record install yarn install --network-timeout 600000
+          run_and_record lint yarn lint
+          run_and_record typecheck yarn typecheck
+          run_and_record test yarn test
+          run_and_record build yarn build
+
+          tar \
+            --exclude=.git \
+            --exclude=node_modules \
+            --exclude=.next \
+            --exclude=phase0-baseline/repository-source.tar.gz \
+            -czf phase0-baseline/repository-source.tar.gz .
+
+          cat phase0-baseline/exit-codes.txt
+
+      - name: Upload baseline artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase0-baseline
+          path: |
+            phase0-baseline
+            yarn.lock
+          if-no-files-found: warn
+          retention-days: 7
