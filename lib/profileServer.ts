@@ -22,19 +22,22 @@ export async function getProfileForUser(user: User): Promise<AltrProfile> {
   await ensureProfile(user);
   const admin = createSupabaseAdminClient();
 
-  const [{ data: profile }, { data: memories }, { data: imports }, { data: drafts }, { data: subscription }, { data: invoices }] = await Promise.all([
+  const [profileResult, memoriesResult, importsResult, draftsResult, subscriptionResult, invoicesResult] = await Promise.all([
     admin.from("altr_profiles").select("*").eq("user_id", user.id).single(),
     admin.from("altr_memories").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-    admin.from("altr_conversation_imports").select("conversations", { count: "exact" }).eq("user_id", user.id).eq("status", "completed"),
+    admin.from("altr_conversation_imports").select("conversations").eq("user_id", user.id).eq("status", "completed"),
     admin.from("altr_draft_replies").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     admin.from("altr_subscriptions").select("*").eq("user_id", user.id).eq("status", "active").order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("altr_invoices").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
   ]);
 
+  const profile = profileResult.data;
+  const subscription = subscriptionResult.data;
+  const invoices = invoicesResult.data ?? [];
   const activePlan = (subscription?.plan as PlanId | undefined) ?? "free";
-  const conversationCount = imports?.reduce((sum, row) => sum + Number(row.conversations ?? 0), 0) ?? 0;
-  const memoryCount = memories?.length ?? 0;
-  const draftCount = drafts?.length ?? 0;
+  const conversationCount = importsResult.data?.reduce((sum, row) => sum + Number(row.conversations ?? 0), 0) ?? 0;
+  const memoryCount = memoriesResult.count ?? 0;
+  const draftCount = draftsResult.count ?? 0;
   const trainingProgress = Math.min(99, 12 + conversationCount * 2 + memoryCount * 3);
 
   return {
@@ -63,7 +66,7 @@ export async function getProfileForUser(user: User): Promise<AltrProfile> {
       orderId: subscription.lemon_squeezy_order_id,
       subscriptionId: subscription.lemon_squeezy_subscription_id,
     } : null,
-    invoices: (invoices ?? []).map((invoice) => ({
+    invoices: invoices.map((invoice) => ({
       id: invoice.id,
       orderId: invoice.lemon_squeezy_order_id ?? invoice.id,
       plan: activePlan,
