@@ -25,7 +25,10 @@ export default function ReceiptPage() {
   const [serverMessage, setServerMessage] = useState("");
 
   useEffect(() => {
-    setLocalInvoices(getCurrentProfile()?.invoices ?? []);
+    let active = true;
+    getCurrentProfile().then(profile => {
+      if (active) setLocalInvoices(profile?.invoices ?? []);
+    });
     fetch(`/api/billing/receipt/${encodeURIComponent(params.orderId)}`, { cache: "no-store" })
       .then(response => response.json())
       .then(result => {
@@ -33,6 +36,7 @@ export default function ReceiptPage() {
         else if (result.configured === false) setServerMessage("Supabase ще не підключений. Показуємо локальну квитанцію MVP.");
       })
       .catch(() => setServerMessage("Не вдалося отримати квитанцію з сервера. Показуємо локальні дані, якщо вони є."));
+    return () => { active = false; };
   }, [params.orderId]);
 
   const localInvoice = useMemo(() => localInvoices.find(item => item.orderId === params.orderId), [localInvoices, params.orderId]);
@@ -62,7 +66,7 @@ export default function ReceiptPage() {
         <section className="pricing-card mt-12 rounded-[2rem] p-8 md:p-10">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start"><div><p className="eyebrow">INVOICE / RECEIPT</p><h1 className="mt-4 text-4xl font-medium tracking-[-.055em]">Квитанція Altr</h1><p className="mt-3 text-sm text-white/34">Квитанція береться із Supabase, а якщо база ще не підключена — з локального MVP-акаунта.</p></div><ReceiptText className="h-12 w-12 text-cyan-100/55" /></div>
           {serverMessage && <p className="mt-6 rounded-2xl border border-cyan-100/[.08] bg-cyan-200/[.035] p-4 text-sm text-cyan-50/60">{serverMessage}</p>}
-          {invoice ? <div className="mt-10 space-y-4 text-sm"><Row label="Order ID" value={invoice.orderId} /><Row label="Plan" value={String(invoice.plan).toUpperCase()} /><Row label="Amount" value={`${invoice.amount} ${invoice.currency}`} /><Row label="Status" value={String(invoice.status).toUpperCase()} /><Row label="Created" value={invoice.createdAt ? new Date(invoice.createdAt).toLocaleString("uk-UA") : "—"} /><Row label="Paid" value={invoice.paidAt ? new Date(invoice.paidAt).toLocaleString("uk-UA") : "—"} /></div> : <p className="mt-8 rounded-2xl border border-white/[.06] bg-white/[.025] p-5 text-sm text-white/42">Квитанцію не знайдено. Якщо оплата щойно пройшла, зачекайте callback від LiqPay і оновіть сторінку.</p>}
+          {invoice ? <div className="mt-10 space-y-4 text-sm"><Row label="Order ID" value={invoice.orderId} /><Row label="Plan" value={String(invoice.plan).toUpperCase()} /><Row label="Amount" value={`${invoice.amount} ${invoice.currency}`} /><Row label="Status" value={String(invoice.status).toUpperCase()} /><Row label="Created" value={invoice.createdAt ? new Date(invoice.createdAt).toLocaleString("uk-UA") : "—"} /><Row label="Paid" value={invoice.paidAt ? new Date(invoice.paidAt).toLocaleString("uk-UA") : "—"} /></div> : <p className="mt-8 rounded-2xl border border-white/[.06] bg-white/[.025] p-5 text-sm text-white/42">Квитанцію не знайдено. Якщо оплата щойно пройшла, зачекайте callback від Lemon Squeezy і оновіть сторінку.</p>}
           <button onClick={() => window.print()} className="glass-button mt-8 inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"><Download className="h-4 w-4" />Print / Save PDF</button>
         </section>
       </div>

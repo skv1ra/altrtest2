@@ -6,43 +6,22 @@ export type BillingInvoice = {
   plan: PlanId;
   amount: number;
   currency: string;
-  status: "paid" | "pending" | "failed";
+  status: "paid" | "pending" | "failed" | "refunded";
   createdAt: string;
-  paidAt?: string;
-  receiptUrl?: string;
+  paidAt?: string | null;
+  receiptUrl?: string | null;
 };
 
-export type PendingPayment = {
-  orderId: string;
-  plan: PlanId;
-  amount: number;
-  currency: string;
-  email?: string;
-  autoRenew: boolean;
-  createdAt: string;
-};
+export type PendingPayment = never;
 
-const PENDING_KEY = "altr_pending_payment_v1";
-
-export function savePendingPayment(payment: PendingPayment) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(PENDING_KEY, JSON.stringify(payment));
+export function savePendingPayment(): never {
+  throw new Error("Client-side pending payments are disabled. Use /api/billing/checkout and verified Lemon Squeezy webhooks.");
 }
 
-export function getPendingPayment(orderId?: string): PendingPayment | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const value = window.localStorage.getItem(PENDING_KEY);
-    if (!value) return null;
-    const payment = JSON.parse(value) as PendingPayment;
-    if (orderId && payment.orderId !== orderId) return null;
-    return payment;
-  } catch {
-    return null;
-  }
+export function getPendingPayment(): null {
+  return null;
 }
 
 export function clearPendingPayment() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(PENDING_KEY);
+  return undefined;
 }
