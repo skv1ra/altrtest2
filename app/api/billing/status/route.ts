@@ -1,28 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getActiveSubscription, getPaymentByOrderId, isSupabaseConfigured } from "@/lib/supabaseServer";
+import { NextResponse } from "next/server";
+import { createSupabaseAdminClient, requireUser } from "@/lib/supabase/server";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const email = searchParams.get("email");
-  const orderId = searchParams.get("orderId") || searchParams.get("order_id");
-
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ configured: false, active: false, message: "Supabase is not configured yet" });
-  }
-
+export async function GET() {
   try {
-    const subscription = await getActiveSubscription({ email, orderId });
-    const payment = orderId ? await getPaymentByOrderId(orderId) : null;
-    const active = Boolean(subscription?.status === "active" && new Date(subscription.expires_at).getTime() > Date.now());
+    const user = await requireUser();
+    const { data: subscription, error } = await createSupabaseAdminClient()
+      .from("altr_subscriptions")
+      .select("plan,status,provider,renews_at,ends_at,updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    return NextResponse.json({
-      configured: true,
-      active,
-      subscription,
-      payment,
-    });
+    if (error) throw error;
+    const active = subscription?.provider === "lemon_squeezy" && subscription.status === "active";
+    return NextResponse.json({ active, subscription: subscription ?? null });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to read billing status";
-    return NextResponse.json({ configured: true, active: false, error: message }, { status: 500 });
+    return NextResponse.json(
+      {
+        active: false,
+        subscription: null,
+        error: error instanceof Error ? error.message : "BILLING_STATUS_FAILED",
+      },
+      { status: 401 },
+    );
   }
 }

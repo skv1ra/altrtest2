@@ -7,7 +7,6 @@ Copy `.env.example` to `.env.local` for local development. Values in this table 
 | `NEXT_PUBLIC_APP_URL`              | Public        | Recommended     | Canonical application URL and OAuth callback base.                                                          |
 | `NEXT_PUBLIC_SUPABASE_URL`         | Public        | Yes             | Supabase project URL used by SSR/client-compatible auth helpers.                                            |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`    | Public        | Yes             | Supabase publishable/anon key. RLS remains the authorization boundary.                                      |
-| `SUPABASE_URL`                     | Server only   | Compatibility   | Same project URL used by legacy server-only billing readers until they are retired.                         |
 | `SUPABASE_SERVICE_ROLE_KEY`        | Server only   | Yes             | Privileged server access for trusted route handlers.                                                        |
 | `LEMONSQUEEZY_API_KEY`             | Server only   | Yes for billing | Creates checkout sessions.                                                                                  |
 | `LEMONSQUEEZY_STORE_ID`            | Server only   | Yes for billing | Lemon Squeezy store identifier.                                                                             |
@@ -15,8 +14,7 @@ Copy `.env.example` to `.env.local` for local development. Values in this table 
 | `LEMONSQUEEZY_PERSONAL_VARIANT_ID` | Server only   | Yes for billing | Maps the Personal plan to its provider variant.                                                             |
 | `LEMONSQUEEZY_WORK_VARIANT_ID`     | Server only   | Yes for billing | Maps the Work plan to its provider variant.                                                                 |
 | `OPENAI_API_KEY`                   | Server only   | Optional        | Enables real AI draft generation. Without it, the draft endpoint returns a controlled unavailable response. |
-| `RESEND_API_KEY`                   | Server only   | Optional        | Enables transactional email.                                                                                |
-| `BILLING_EMAIL_FROM`               | Server only   | Optional        | Verified sender used by transactional billing email.                                                        |
+| `RESEND_API_KEY`                   | Server only   | Optional        | Application notifications such as support or privacy requests; never billing receipts.                     |
 | `APP_BUILD_TIME`                   | Build/server  | Automatic       | Injected by `next.config.js`; may be overridden by build infrastructure.                                    |
 | `VERCEL_GIT_COMMIT_SHA`            | Vercel system | Automatic       | Exposed through `/api/version` as deployment metadata.                                                      |
 | `VERCEL_ENV`                       | Vercel system | Automatic       | `production`, `preview`, or `development` deployment name.                                                  |

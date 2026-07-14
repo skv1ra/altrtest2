@@ -72,5 +72,6 @@ describe("Lemon Squeezy integration boundary", () => {
       altr_plan: "personal",
     });
     expect(body.data.attributes.product_options.redirect_url).toBe("https://altr.example/billing/return");
+    expect(body.data.attributes.checkout_options.discount).toBe(true);
   });
 });
