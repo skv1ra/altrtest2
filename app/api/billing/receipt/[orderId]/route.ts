@@ -1,16 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getInvoiceByOrderId, isSupabaseConfigured } from "@/lib/supabaseServer";
+import { NextResponse } from "next/server";
+import { createSupabaseAdminClient, requireUser } from "@/lib/supabase/server";
 
-export async function GET(_request: NextRequest, { params }: { params: { orderId: string } }) {
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ configured: false, invoice: null });
-  }
-
+export async function GET(_request: Request, { params }: { params: { orderId: string } }) {
   try {
-    const invoice = await getInvoiceByOrderId(params.orderId);
-    return NextResponse.json({ configured: true, invoice });
+    const user = await requireUser();
+    const { data: invoice, error } = await createSupabaseAdminClient()
+      .from("altr_invoices")
+      .select("lemon_squeezy_order_id,amount,currency,status,receipt_url,created_at,paid_at")
+      .eq("user_id", user.id)
+      .eq("provider", "lemon_squeezy")
+      .eq("lemon_squeezy_order_id", params.orderId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return NextResponse.json({ invoice: invoice ?? null });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to read receipt";
-    return NextResponse.json({ configured: true, invoice: null, error: message }, { status: 500 });
+    return NextResponse.json(
+      { invoice: null, error: error instanceof Error ? error.message : "RECEIPT_LOOKUP_FAILED" },
+      { status: 401 },
+    );
   }
 }
