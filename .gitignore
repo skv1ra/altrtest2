@@ -1,6 +1,13 @@
 node_modules
 .next
 out
-.env*.local
+coverage
+playwright-report
+test-results
+.env
+.env.*
+!.env.example
 .vercel
 .DS_Store
+*.tsbuildinfo
+.eslintcache

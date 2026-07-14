@@ -1,4 +1,6 @@
 {
-  "installCommand": "yarn install --ignore-engines --network-timeout 600000 --registry https://registry.npmjs.org/",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "yarn install --frozen-lockfile",
   "buildCommand": "yarn build"
 }
