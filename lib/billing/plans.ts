@@ -21,3 +21,5 @@ export function isPaidPlanId(value: unknown): value is PaidPlanId {
 export function hasPlanAccess(currentPlan: PlanId, requiredPlan: PlanId): boolean {
   return PLAN_RANK[currentPlan] >= PLAN_RANK[requiredPlan];
 }
+
+export type { PaidPlanId, PlanId } from "@/lib/billing/types";
