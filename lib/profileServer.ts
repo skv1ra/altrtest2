@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
-import type { AltrProfile, PlanId } from "@/lib/auth";
+import type { AltrProfile } from "@/lib/auth";
+import { getUserEntitlement } from "@/lib/billing/entitlements";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const defaultStats = { conversations: 0, memories: 0, drafts: 0 };
@@ -10,41 +11,30 @@ export async function ensureProfile(user: User, name?: string | null) {
   const admin = createSupabaseAdminClient();
   const displayName = name ?? user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Altr User";
   const email = user.email ?? "";
-
   const existing = await admin.from("altr_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
   if (existing.data) return;
-
   const firstName = String(displayName).split(" ")[0] || "My";
-  const result = await admin.from("altr_profiles").insert({
-    user_id: user.id,
-    email,
-    name: displayName,
-    altr_name: firstName + " Altr",
-  });
-
-  if (result.error && !String(result.error.message).includes("duplicate")) {
-    throw result.error;
-  }
+  const result = await admin.from("altr_profiles").insert({ user_id: user.id, email, name: displayName, altr_name: firstName + " Altr" });
+  if (result.error && !String(result.error.message).includes("duplicate")) throw result.error;
 }
 
 export async function getProfileForUser(user: User): Promise<AltrProfile> {
   await ensureProfile(user);
   const admin = createSupabaseAdminClient();
-
-  const profileResult = await admin.from("altr_profiles").select("*").eq("user_id", user.id).maybeSingle();
-  const subscriptionResult = await admin.from("altr_subscriptions").select("*").eq("user_id", user.id).eq("status", "active").order("updated_at", { ascending: false }).limit(1).maybeSingle();
-  const invoicesResult = await admin.from("altr_invoices").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20);
-  const memoriesResult = await admin.from("altr_memories").select("id", { count: "exact", head: true }).eq("user_id", user.id);
-  const draftsResult = await admin.from("altr_draft_replies").select("id", { count: "exact", head: true }).eq("user_id", user.id);
-  const importsResult = await admin.from("altr_conversation_imports").select("conversations").eq("user_id", user.id).eq("status", "completed");
+  const [profileResult, entitlement, subscriptionResult, invoicesResult, memoriesResult, draftsResult, importsResult] = await Promise.all([
+    admin.from("altr_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+    getUserEntitlement(user.id),
+    admin.from("altr_subscriptions").select("*").eq("user_id", user.id).eq("provider", "lemon_squeezy").order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+    admin.from("altr_billing_invoices").select("*").eq("user_id", user.id).eq("provider", "lemon_squeezy").order("created_at", { ascending: false }).limit(20),
+    admin.from("altr_memories").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    admin.from("altr_draft_replies").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    admin.from("altr_conversation_imports").select("conversations").eq("user_id", user.id).eq("status", "completed"),
+  ]);
 
   const profile = profileResult.data;
   const subscription = subscriptionResult.data;
-  const activePlan = (subscription?.plan as PlanId | undefined) ?? "free";
   const invoices = invoicesResult.data ?? [];
   const conversationCount = importsResult.data?.reduce((sum, row) => sum + Number(row.conversations ?? 0), 0) ?? 0;
-  const memoryCount = memoriesResult.count ?? 0;
-  const draftCount = draftsResult.count ?? 0;
 
   return {
     id: user.id,
@@ -55,27 +45,27 @@ export async function getProfileForUser(user: User): Promise<AltrProfile> {
     bio: profile?.bio ?? "Altr learns from approved conversation imports and creates draft replies only.",
     createdAt: profile?.created_at ?? new Date().toISOString(),
     updatedAt: profile?.updated_at ?? new Date().toISOString(),
-    plan: activePlan,
-    trainingProgress: Math.min(99, 12 + conversationCount * 2 + memoryCount * 3),
+    plan: entitlement.planId,
+    trainingProgress: Math.min(99, 12 + conversationCount * 2 + (memoriesResult.count ?? 0) * 3),
     tone: profile?.tone ?? "balanced",
-    stats: { ...defaultStats, conversations: conversationCount, memories: memoryCount, drafts: draftCount },
+    stats: { ...defaultStats, conversations: conversationCount, memories: memoriesResult.count ?? 0, drafts: draftsResult.count ?? 0 },
     connections: defaultConnections,
     preferences: defaultPreferences,
     consents: { policyVersion: "2026-07-13", termsAcceptedAt: "", conversationProcessingAcceptedAt: "", aiMemoryAcceptedAt: "" },
     subscription: subscription ? {
       status: subscription.status,
-      plan: subscription.plan,
+      plan: entitlement.planId,
       startedAt: subscription.created_at,
       expiresAt: subscription.renews_at ?? subscription.ends_at,
-      autoRenew: !subscription.ends_at,
+      autoRenew: !subscription.cancelled,
       provider: "lemon_squeezy",
-      orderId: subscription.lemon_squeezy_order_id,
-      subscriptionId: subscription.lemon_squeezy_subscription_id,
+      orderId: subscription.provider_order_id,
+      subscriptionId: subscription.provider_subscription_id,
     } : null,
     invoices: invoices.map((invoice) => ({
       id: invoice.id,
-      orderId: invoice.lemon_squeezy_order_id ?? invoice.id,
-      plan: activePlan,
+      orderId: invoice.provider_order_id ?? invoice.id,
+      plan: entitlement.planId,
       amount: invoice.amount ?? 0,
       currency: invoice.currency ?? "USD",
       status: invoice.status,

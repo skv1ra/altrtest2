@@ -3,8 +3,8 @@ export type PlanId = "free" | "personal" | "work";
 export const planRank: Record<PlanId, number> = { free: 0, personal: 1, work: 2 };
 export const hasPlanAccess = (current: PlanId, required: PlanId) => planRank[current] >= planRank[required];
 
-export type BillingSubscription = { status: "inactive" | "active" | "past_due" | "cancelled" | "expired"; plan: PlanId; startedAt: string; expiresAt?: string | null; autoRenew: boolean; provider: "lemon_squeezy"; orderId?: string | null; subscriptionId?: string | null };
-export type BillingInvoice = { id: string; orderId: string; plan: PlanId; amount: number; currency: string; status: "paid" | "pending" | "failed" | "refunded"; createdAt: string; paidAt?: string | null; receiptUrl?: string | null };
+export type BillingSubscription = { status: "on_trial" | "active" | "paused" | "past_due" | "unpaid" | "cancelled" | "expired"; plan: PlanId; startedAt: string; expiresAt?: string | null; autoRenew: boolean; provider: "lemon_squeezy"; orderId?: string | null; subscriptionId?: string | null };
+export type BillingInvoice = { id: string; orderId: string; plan: PlanId; amount: number; currency: string; status: string; createdAt: string; paidAt?: string | null; receiptUrl?: string | null };
 export type AltrProfile = { id: string; name: string; email: string; role: string; altrName: string; bio: string; createdAt: string; updatedAt: string; plan: PlanId; trainingProgress: number; tone: ToneMode; stats: { conversations: number; memories: number; drafts: number }; connections: { email: boolean; calendar: boolean; messages: boolean; workspace: boolean }; preferences: { learning: boolean; autoDrafts: boolean; weeklyDigest: boolean; privacyMode: boolean }; consents: { policyVersion: string; termsAcceptedAt: string; conversationProcessingAcceptedAt: string; aiMemoryAcceptedAt: string }; subscription?: BillingSubscription | null; invoices?: BillingInvoice[] };
 
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {

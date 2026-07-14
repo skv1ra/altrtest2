@@ -1,77 +1,34 @@
 // @vitest-environment node
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createCheckout, planFromVariantId } from "@/lib/lemonSqueezy";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import { isPaidPlanId } from "@/lib/billing/plans";
 
-const requiredEnvironment = {
-  NEXT_PUBLIC_APP_URL: "https://altr.example",
-  NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key-at-least-20-characters",
-  SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key-at-least-20-characters",
-  LEMONSQUEEZY_API_KEY: "test-lemon-key-at-least-20-characters",
-  LEMONSQUEEZY_STORE_ID: "42",
-  LEMONSQUEEZY_WEBHOOK_SECRET: "test-webhook-secret-at-least-20-characters",
-  LEMONSQUEEZY_PERSONAL_VARIANT_ID: "1001",
-  LEMONSQUEEZY_WORK_VARIANT_ID: "1002",
-};
+const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
+const source = readFileSync(resolve(repositoryRoot, "lib/billing/lemonsqueezy.ts"), "utf8");
 
-describe("Lemon Squeezy integration boundary", () => {
-  beforeEach(() => {
-    for (const [name, value] of Object.entries(requiredEnvironment)) {
-      vi.stubEnv(name, value);
-    }
+describe("Lemon Squeezy SDK boundary", () => {
+  it("uses the official SDK instead of a hand-written checkout fetch", () => {
+    expect(source).toContain('from "@lemonsqueezy/lemonsqueezy.js"');
+    expect(source).toContain("createCheckout");
+    expect(source).toContain("getSubscription");
+    expect(source).not.toContain('fetch("https://api.lemonsqueezy.com');
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
+  it("creates hosted checkout with trusted custom metadata", () => {
+    expect(source).toContain("embed: false");
+    expect(source).toContain("discount: true");
+    expect(source).toContain("user_id: input.userId");
+    expect(source).toContain("plan_id: input.planId");
+    expect(source).toContain("/payment/success");
   });
 
-  it("maps configured variant IDs without an external request", () => {
-    expect(planFromVariantId("1001")).toBe("personal");
-    expect(planFromVariantId(1002)).toBe("work");
-    expect(planFromVariantId("9999")).toBeNull();
-  });
-
-  it("uses a mocked API and sends authenticated user metadata", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            attributes: {
-              url: "https://checkout.lemonsqueezy.com/buy/example",
-            },
-          },
-        }),
-        { status: 201, headers: { "Content-Type": "application/json" } },
-      ),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    const checkout = await createCheckout({
-      userId: "00000000-0000-4000-8000-000000000001",
-      email: "user@example.com",
-      plan: "personal",
-    });
-
-    expect(checkout).toEqual({
-      url: "https://checkout.lemonsqueezy.com/buy/example",
-      variantId: "1001",
-    });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-
-    const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://api.lemonsqueezy.com/v1/checkouts");
-    expect(request.headers).toMatchObject({
-      Authorization: "Bearer test-lemon-key-at-least-20-characters",
-    });
-
-    const body = JSON.parse(String(request.body));
-    expect(body.data.attributes.checkout_data.custom).toEqual({
-      supabase_user_id: "00000000-0000-4000-8000-000000000001",
-      altr_plan: "personal",
-    });
-    expect(body.data.attributes.product_options.redirect_url).toBe("https://altr.example/billing/return");
-    expect(body.data.attributes.checkout_options.discount).toBe(true);
+  it("keeps checkout plans allowlisted", () => {
+    expect(isPaidPlanId("personal")).toBe(true);
+    expect(isPaidPlanId("work")).toBe(true);
+    expect(isPaidPlanId("free")).toBe(false);
+    expect(isPaidPlanId("1001")).toBe(false);
   });
 });

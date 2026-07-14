@@ -3,13 +3,14 @@ import { createHash } from "crypto";
 import type { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export type AuthRateLimitAction = "register" | "login" | "forgot" | "reset";
+export type AuthRateLimitAction = "register" | "login" | "forgot" | "reset" | "billing_checkout";
 
 const limits: Record<AuthRateLimitAction, { attempts: number; windowMinutes: number }> = {
   register: { attempts: 5, windowMinutes: 60 },
   login: { attempts: 10, windowMinutes: 15 },
   forgot: { attempts: 5, windowMinutes: 60 },
   reset: { attempts: 5, windowMinutes: 30 },
+  billing_checkout: { attempts: 8, windowMinutes: 15 },
 };
 
 export function getRequestIdentity(request: NextRequest, email?: string) {
@@ -33,9 +34,6 @@ export async function assertAuthRateLimit(action: AuthRateLimitAction, identity:
   if (error) throw new Error("RATE_LIMIT_STORAGE_FAILED");
   if ((count ?? 0) >= config.attempts) throw new Error("RATE_LIMITED");
 
-  const { error: insertError } = await admin.from("altr_auth_rate_limits").insert({
-    action,
-    identifier_hash: identifierHash,
-  });
+  const { error: insertError } = await admin.from("altr_auth_rate_limits").insert({ action, identifier_hash: identifierHash });
   if (insertError) throw new Error("RATE_LIMIT_STORAGE_FAILED");
 }
