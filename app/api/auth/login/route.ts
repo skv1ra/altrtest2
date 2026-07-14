@@ -9,8 +9,7 @@ const GENERIC_ERROR = "Не вдалося увійти. Перевір дані
 export async function POST(request: NextRequest) {
   try {
     const input = loginSchema.parse(await request.json());
-    const identity = getRequestIdentity(request, input.email);
-    await assertAuthRateLimit("login", identity);
+    await assertAuthRateLimit("login", getRequestIdentity(request, input.email));
 
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email: input.email, password: input.password });
@@ -21,7 +20,16 @@ export async function POST(request: NextRequest) {
       event_type: "auth.login",
       metadata: { provider: "password" },
     });
-    return NextResponse.json({ ok: true });
+
+    const response = NextResponse.json({ ok: true, next: "/legacy-migration" });
+    response.cookies.set("altr_legacy_review", "pending", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+    return response;
   } catch (error) {
     const status = error instanceof Error && error.message === "RATE_LIMITED" ? 429 : 400;
     return NextResponse.json({ error: status === 429 ? "Забагато спроб. Спробуй пізніше." : GENERIC_ERROR }, { status });
