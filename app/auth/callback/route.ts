@@ -5,7 +5,7 @@ import { safeRedirectPath } from "@/lib/supabase/middleware";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  const next = safeRedirectPath(request.nextUrl.searchParams.get("next"), "/dashboard");
+  const next = safeRedirectPath(request.nextUrl.searchParams.get("next"), "/legacy-migration");
   if (!code) return NextResponse.redirect(new URL("/auth?mode=login&error=callback", request.url));
 
   const supabase = createSupabaseServerClient();
@@ -18,5 +18,14 @@ export async function GET(request: NextRequest) {
     name: data.user.user_metadata?.full_name ?? null,
     updated_at: new Date().toISOString(),
   });
-  return NextResponse.redirect(new URL(next, request.url));
+
+  const response = NextResponse.redirect(new URL(next, request.url));
+  response.cookies.set("altr_legacy_review", "pending", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  return response;
 }
