@@ -65,3 +65,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "feat: completely remove LiqPay runtime"
           git push origin HEAD:agent/phase-1-remove-liqpay
+
+# trigger after PR creation
