@@ -1,9 +1,8 @@
 name: Phase 0 Finalize
 
 on:
-  push:
-    branches:
-      - agent/phase-0-repository-foundation
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +10,7 @@ permissions:
   statuses: write
 
 concurrency:
-  group: phase0-finalize-${{ github.ref }}
+  group: phase0-finalize-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -29,6 +28,7 @@ env:
 
 jobs:
   finalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -64,6 +64,10 @@ jobs:
           echo "452d9b1b6d3d08e1cf9ac2b8044637e6ece61b26eb74ba48f1171274df69adc0  /tmp/phase0-payload.tar.gz" | sha256sum --check
           tar -xzf /tmp/phase0-payload.tar.gz -C .
 
+          # Yarn Classic has a built-in `check` command. Always invoke our
+          # package script explicitly in CI so lint, types, tests and build run.
+          sed -i 's/run: yarn check/run: yarn run check/' .github/workflows/ci.yml
+
           rm -rf .phase0
           rm -f \
             .github/workflows/phase0-baseline.yml \
@@ -77,19 +81,19 @@ jobs:
         run: yarn install --non-interactive
 
       - name: Format Phase 0 files
-        run: yarn format
+        run: yarn run format
 
       - name: Verify formatting
-        run: yarn format:check
+        run: yarn run format:check
 
       - name: Run lint, types, Vitest, and production build
-        run: yarn check
+        run: yarn run check
 
       - name: Install Playwright Chromium
         run: yarn playwright install --with-deps chromium
 
       - name: Run critical browser flows with mocked external APIs
-        run: yarn test:e2e
+        run: yarn run test:e2e
 
       - name: Commit verified Phase 0 changes
         shell: bash
