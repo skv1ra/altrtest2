@@ -10,12 +10,21 @@ import { getCurrentProfile, registerAccount, signInAccount, signInWithGoogle } f
 import { LEGAL_VERSION } from "@/lib/legal";
 
 type Mode = "register" | "login";
-
 const activationSteps = [
   ["01", "Створи приватний профіль", "Акаунт і cookie-сесія працюють через Supabase Auth."],
   ["02", "Підключи свій контекст", "Altr використовує тільки явно імпортовані дані."],
   ["03", "Отримуй draft replies", "AI створює чернетки лише після твоєї дії."],
 ] as const;
+
+function ConsentControl({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-white/42">
+      <input className="sr-only" type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span className={`checkbox-visual ${checked ? "checkbox-visual-active" : ""}`}>{checked && <Check className="h-3 w-3" />}</span>
+      <span>{children}</span>
+    </label>
+  );
+}
 
 export default function AuthPage() {
   const router = useRouter();
@@ -73,7 +82,7 @@ export default function AuthPage() {
       } else {
         await signInAccount(email, password);
       }
-      router.replace("/dashboard");
+      router.replace("/legacy-migration");
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Не вдалося виконати дію. Спробуй ще раз.");
@@ -108,7 +117,9 @@ export default function AuthPage() {
             <label className="auth-field"><span>Пароль</span><span className="auth-input-wrap"><LockKeyhole className="h-4 w-4" /><input value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === "register" ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Сховати пароль" : "Показати пароль"}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></span></label>
             {mode === "login" && <Link href="/auth/forgot-password" className="block text-right text-xs text-cyan-100/60">Забув пароль?</Link>}
             {mode === "register" && <div className="space-y-3 rounded-[1rem] border border-white/[.06] bg-black/10 p-4">
-              {[[acceptedTerms, setAcceptedTerms, <>Я приймаю <Link className="text-cyan-100/65 underline" href="/terms" target="_blank">Terms</Link> та <Link className="text-cyan-100/65 underline" href="/privacy" target="_blank">Privacy Policy</Link>.</>], [acceptedConversations, setAcceptedConversations, <>Я даю згоду на обробку переписок, які сам імпортую.</>], [acceptedMemory, setAcceptedMemory, <>Я даю згоду на створення персональної AI-памʼяті.</>]].map(([checked, setter, label], index) => <label key={index} className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-white/42"><input className="sr-only" type="checkbox" checked={Boolean(checked)} onChange={(event) => (setter as (value: boolean) => void)(event.target.checked)} /><span className={`checkbox-visual ${checked ? "checkbox-visual-active" : ""}`}>{checked && <Check className="h-3 w-3" />}</span><span>{label}</span></label>)}
+              <ConsentControl checked={acceptedTerms} onChange={setAcceptedTerms}>Я приймаю <Link className="text-cyan-100/65 underline" href="/terms" target="_blank">Terms</Link> та <Link className="text-cyan-100/65 underline" href="/privacy" target="_blank">Privacy Policy</Link>.</ConsentControl>
+              <ConsentControl checked={acceptedConversations} onChange={setAcceptedConversations}>Я даю згоду на обробку переписок, які сам імпортую.</ConsentControl>
+              <ConsentControl checked={acceptedMemory} onChange={setAcceptedMemory}>Я даю згоду на створення персональної AI-памʼяті.</ConsentControl>
             </div>}
             {error && <p role="alert" className="rounded-xl border border-red-300/10 bg-red-400/[.06] px-4 py-3 text-sm text-red-100/75">{error}</p>}
             {notice && <p role="status" className="rounded-xl border border-cyan-200/10 bg-cyan-200/[.05] px-4 py-3 text-sm text-cyan-50/75">{notice}</p>}
