@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+  NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key-placeholder-at-least-twenty-characters
+  SUPABASE_URL: https://ci-placeholder.supabase.co
+  SUPABASE_SERVICE_ROLE_KEY: ci-service-role-placeholder-at-least-twenty-characters
+  LEMONSQUEEZY_API_KEY: ci-lemon-api-placeholder-at-least-twenty-characters
+  LEMONSQUEEZY_STORE_ID: ci-store
+  LEMONSQUEEZY_WEBHOOK_SECRET: ci-webhook-placeholder-at-least-twenty-characters
+  LEMONSQUEEZY_PERSONAL_VARIANT_ID: ci-personal
+  LEMONSQUEEZY_WORK_VARIANT_ID: ci-work
+
+jobs:
+  quality:
+    name: Lint, types, unit tests, build, and browser flows
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Install Yarn 1.22.22
+        run: npm install --global yarn@1.22.22
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Verify formatting
+        run: yarn format:check
+
+      - name: Run repository checks
+        run: yarn run check
+
+      - name: Install Playwright Chromium
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run critical browser flows
+        run: yarn test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
