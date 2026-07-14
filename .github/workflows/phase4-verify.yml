@@ -1,8 +1,8 @@
 name: Phase 4 Verify
 
 on:
-  push:
-    branches: [agent/phase-4-lemon-squeezy-billing]
+  pull_request:
+    branches: [agent/phase-3-versioned-database]
   workflow_dispatch:
 
 permissions:
