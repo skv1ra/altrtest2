@@ -1,8 +1,7 @@
 import "server-only";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-
-export type PlanId = "free" | "personal" | "work";
+import { hasPlanAccess, type PlanId } from "@/lib/billing/plans";
 
 export type UserEntitlement = {
   planId: PlanId;
@@ -10,16 +9,6 @@ export type UserEntitlement = {
   reason: string;
   accessEndsAt: string | null;
 };
-
-const PLAN_RANK: Record<PlanId, number> = {
-  free: 0,
-  personal: 1,
-  work: 2,
-};
-
-export function hasPlanAccess(currentPlan: PlanId, requiredPlan: PlanId): boolean {
-  return PLAN_RANK[currentPlan] >= PLAN_RANK[requiredPlan];
-}
 
 export async function getUserEntitlement(userId: string): Promise<UserEntitlement> {
   const { data, error } = await createSupabaseAdminClient()
@@ -49,3 +38,6 @@ export async function requirePlan(userId: string, requiredPlan: PlanId): Promise
 
   return entitlement;
 }
+
+export { hasPlanAccess } from "@/lib/billing/plans";
+export type { PlanId } from "@/lib/billing/plans";
