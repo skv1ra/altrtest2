@@ -43,6 +43,9 @@ export async function createCheckout(input: { userId: string; email: string; pla
           product_options: {
             redirect_url: `${appUrl}/billing/return`,
           },
+          checkout_options: {
+            discount: true,
+          },
         },
         relationships: {
           store: { data: { type: "stores", id: env.LEMONSQUEEZY_STORE_ID } },
