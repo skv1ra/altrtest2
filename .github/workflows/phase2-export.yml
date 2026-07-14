@@ -1,0 +1,21 @@
+name: Phase 2 Export
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Archive working tree
+        shell: bash
+        run: tar --exclude=.git --exclude=node_modules --exclude=.next -czf phase2-repository.tar.gz .
+      - name: Upload working
