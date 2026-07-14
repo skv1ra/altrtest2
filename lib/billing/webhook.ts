@@ -53,6 +53,10 @@ function text(value: unknown): string | null {
   return value === null || value === undefined ? null : String(value);
 }
 
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
 export function verifyLemonSignature(rawBody: string, signature: string | null): boolean {
   if (!signature || !/^[a-f0-9]{64}$/i.test(signature)) return false;
   const expected = createHmac("sha256", getBillingEnv().LEMONSQUEEZY_WEBHOOK_SECRET).update(rawBody).digest("hex");
@@ -74,10 +78,11 @@ export function parseVerifiedLemonWebhook(rawBody: string): ParsedLemonWebhook {
   if (!supportedEvents.has(parsed.data.meta.event_name)) throw new Error("UNSUPPORTED_WEBHOOK_EVENT");
 
   const attributes = parsed.data.data.attributes;
+  const firstOrderItem = objectValue(attributes.first_order_item);
   const storeId = text(attributes.store_id);
   if (!storeId || storeId !== String(getBillingEnv().LEMONSQUEEZY_STORE_ID)) throw new Error("INVALID_WEBHOOK_STORE");
 
-  const variantId = text(attributes.variant_id);
+  const variantId = text(attributes.variant_id ?? firstOrderItem.variant_id);
   const planId = planFromVariantId(variantId);
   const custom = parsed.data.meta.custom_data ?? {};
   const customUser = text(custom.user_id);
