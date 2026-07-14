@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     if (error || !consent) return NextResponse.json({ error: "CONSENT_RECORD_NOT_FOUND" }, { status: 404 });
 
     const now = new Date().toISOString();
+    const userAgent = request.headers.get("user-agent") ?? consent.user_agent;
     await admin.from("altr_consent_history").insert({
       user_id: user.id,
       consent_id: consent.id,
@@ -38,11 +39,41 @@ export async function POST(request: NextRequest) {
       ai_memory_accepted: input.aiMemory ? false : Boolean(consent.ai_memory_accepted_at),
       locale: consent.locale,
       ip_address: consent.ip_address,
-      user_agent: request.headers.get("user-agent") ?? consent.user_agent,
+      user_agent: userAgent,
       reason: input.reason ?? null,
     });
 
-    await admin.from("altr_consents").update({ withdrawn_at: now, withdrawal_reason: input.reason ?? null, updated_at: now }).eq("id", consent.id);
+    const events = [];
+    if (input.conversationProcessing) events.push("conversation_processing");
+    if (input.aiMemory) events.push("ai_memory");
+    await admin.from("altr_consent_events").insert(
+      events.map((consentType) => ({
+        user_id: user.id,
+        consent_type: consentType,
+        event_type: "withdrawn",
+        policy_version: consent.policy_version,
+        granted: false,
+        locale: consent.locale,
+        ip_address: consent.ip_address,
+        user_agent: userAgent,
+        reason: input.reason ?? null,
+        created_at: now,
+      })),
+    );
+
+    await admin
+      .from("altr_consents")
+      .update({ withdrawn_at: now, withdrawal_reason: input.reason ?? null, updated_at: now })
+      .eq("id", consent.id);
+
+    await admin.from("altr_audit_events").insert({
+      user_id: user.id,
+      actor_type: "user",
+      event_type: "consent.withdrawn",
+      entity_type: "consent",
+      metadata: { consentTypes: events },
+    });
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "CONSENT_WITHDRAWAL_FAILED" }, { status: 400 });

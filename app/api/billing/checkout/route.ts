@@ -18,9 +18,11 @@ export async function POST(request: NextRequest) {
     }
 
     const checkout = await createCheckout({ userId: user.id, email: user.email, plan });
-    await createSupabaseAdminClient().from("altr_audit_logs").insert({
+    await createSupabaseAdminClient().from("altr_audit_events").insert({
       user_id: user.id,
+      actor_type: "user",
       event_type: "billing.checkout_created",
+      entity_type: "checkout",
       metadata: { plan, variantId: checkout.variantId },
     });
 
