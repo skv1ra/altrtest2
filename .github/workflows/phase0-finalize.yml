@@ -64,8 +64,6 @@ jobs:
           echo "452d9b1b6d3d08e1cf9ac2b8044637e6ece61b26eb74ba48f1171274df69adc0  /tmp/phase0-payload.tar.gz" | sha256sum --check
           tar -xzf /tmp/phase0-payload.tar.gz -C .
 
-          # Yarn Classic has a built-in `check` command. Always invoke our
-          # package script explicitly in CI so lint, types, tests and build run.
           sed -i 's/run: yarn check/run: yarn run check/' .github/workflows/ci.yml
 
           rm -rf .phase0
@@ -94,6 +92,26 @@ jobs:
 
       - name: Run critical browser flows with mocked external APIs
         run: yarn run test:e2e
+
+      - name: Package verified Phase 0 tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar \
+            --exclude=.git \
+            --exclude=node_modules \
+            --exclude=.next \
+            --exclude=playwright-report \
+            --exclude=test-results \
+            -czf /tmp/phase0-verified.tar.gz .
+
+      - name: Upload verified Phase 0 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase0-verified
+          path: /tmp/phase0-verified.tar.gz
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Commit verified Phase 0 changes
         shell: bash
