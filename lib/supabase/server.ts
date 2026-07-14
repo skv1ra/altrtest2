@@ -1,7 +1,10 @@
-import { cookies } from "next/headers";
+import "server-only";
 import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
-import { getPublicEnv, getServerEnv } from "@/lib/env";
+import { cookies } from "next/headers";
+import type { User } from "@supabase/supabase-js";
+import { getPublicEnv } from "@/lib/env";
+
+export { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export function createSupabaseServerClient() {
   const env = getPublicEnv();
@@ -9,36 +12,32 @@ export function createSupabaseServerClient() {
 
   return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
+      getAll() {
+        return cookieStore.getAll();
       },
-      set(name: string, value: string, options) {
-        cookieStore.set({ name, value, ...options });
-      },
-      remove(name: string, options) {
-        cookieStore.set({ name, value: "", ...options });
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {
+          // Server Components cannot write cookies. Middleware refreshes the session.
+        }
       },
     },
   });
 }
 
-export function createSupabaseAdminClient() {
-  const env = getServerEnv();
-  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+export async function getOptionalUser(): Promise<User | null> {
+  const { data, error } = await createSupabaseServerClient().auth.getUser();
+  if (error) return null;
+  return data.user ?? null;
 }
 
-export async function requireUser() {
-  const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
+export async function requireUser(): Promise<User> {
+  const user = await getOptionalUser();
+  if (!user) throw new Error("AUTH_REQUIRED");
+  return user;
+}
 
-  if (error || !data.user) {
-    throw new Error("AUTH_REQUIRED");
-  }
-
-  return data.user;
+export async function requireUserId(): Promise<string> {
+  return (await requireUser()).id;
 }

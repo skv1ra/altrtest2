@@ -1,37 +1,89 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase/server";
-import { getProfileForUser, ensureProfile } from "@/lib/profileServer";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { registerSchema } from "@/lib/auth/validation";
+import { assertAuthRateLimit, getRequestIdentity } from "@/lib/auth/rate-limit";
+
+const GENERIC_ERROR = "Не вдалося створити акаунт. Перевір дані й спробуй ще раз.";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    const password = typeof body.password === "string" ? body.password : "";
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    const policyVersion = typeof body.policyVersion === "string" ? body.policyVersion : "";
+    const input = registerSchema.parse(await request.json());
+    await assertAuthRateLimit("register", getRequestIdentity(request, input.email));
 
-    if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "INVALID_EMAIL" }, { status: 400 });
-    if (password.length < 8) return NextResponse.json({ error: "PASSWORD_TOO_SHORT" }, { status: 400 });
-    if (name.length < 2) return NextResponse.json({ error: "NAME_REQUIRED" }, { status: 400 });
-
+    const origin = new URL(request.url).origin;
     const supabase = createSupabaseServerClient();
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
-    if (error) throw error;
-    if (!data.user) return NextResponse.json({ error: "REGISTRATION_PENDING_CONFIRMATION" }, { status: 202 });
-
-    await ensureProfile(data.user, name);
-    const admin = createSupabaseAdminClient();
-    await admin.from("altr_consents").insert({
-      user_id: data.user.id,
-      policy_version: policyVersion || "2026-07-13",
-      terms_accepted_at: new Date().toISOString(),
-      conversation_processing_accepted_at: new Date().toISOString(),
-      ai_memory_accepted_at: new Date().toISOString(),
+    const { data, error } = await supabase.auth.signUp({
+      email: input.email,
+      password: input.password,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback?next=/legacy-migration`,
+        data: { full_name: input.name },
+      },
     });
-    await admin.from("altr_audit_logs").insert({ user_id: data.user.id, event_type: "auth.registered", metadata: { provider: "password" } });
+    if (error || !data.user) return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
 
-    return NextResponse.json({ profile: await getProfileForUser(data.user) });
+    const admin = createSupabaseAdminClient();
+    await admin.from("altr_profiles").upsert({
+      user_id: data.user.id,
+      email: input.email,
+      name: input.name,
+      updated_at: new Date().toISOString(),
+    });
+
+    const now = new Date().toISOString();
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+    const userAgent = request.headers.get("user-agent");
+    const { data: consent } = await admin
+      .from("altr_consents")
+      .insert({
+        user_id: data.user.id,
+        policy_version: input.policyVersion,
+        terms_accepted_at: now,
+        conversation_processing_accepted_at: now,
+        ai_memory_accepted_at: now,
+        locale: input.locale,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        updated_at: now,
+      })
+      .select("id")
+      .single();
+
+    await admin.from("altr_consent_history").insert({
+      user_id: data.user.id,
+      consent_id: consent?.id ?? null,
+      event_type: "accepted",
+      policy_version: input.policyVersion,
+      terms_accepted: true,
+      conversation_processing_accepted: true,
+      ai_memory_accepted: true,
+      locale: input.locale,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+    });
+    await admin.from("altr_audit_logs").insert({
+      user_id: data.user.id,
+      event_type: "auth.registered",
+      metadata: { provider: "password", email_verification_required: !data.session },
+    });
+
+    const response = NextResponse.json(
+      { ok: true, requiresEmailVerification: !data.session, next: data.session ? "/legacy-migration" : null },
+      { status: data.session ? 200 : 202 },
+    );
+    if (data.session) {
+      response.cookies.set("altr_legacy_review", "pending", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+    return response;
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "REGISTER_FAILED" }, { status: 500 });
+    const status = error instanceof Error && error.message === "RATE_LIMITED" ? 429 : 400;
+    return NextResponse.json({ error: status === 429 ? "Забагато спроб. Спробуй пізніше." : GENERIC_ERROR }, { status });
   }
 }
