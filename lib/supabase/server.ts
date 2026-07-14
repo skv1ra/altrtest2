@@ -1,6 +1,9 @@
+import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getPublicEnv } from "@/lib/env";
+
+export { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export function createSupabaseServerClient() {
   const env = getPublicEnv();
