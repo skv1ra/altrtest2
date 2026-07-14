@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasPlanAccess } from "@/lib/billing/entitlements";
+import { hasPlanAccess } from "@/lib/billing/plans";
 
 describe("hasPlanAccess", () => {
   it("allows the same or a higher plan", () => {
