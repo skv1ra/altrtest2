@@ -32,5 +32,6 @@ The trigger `altr_set_past_due_grace()` records the grace deadline when a subscr
 2. `20260714211000_phase_3_billing_entitlements.sql`
 3. `20260714212000_phase_3_rls_indexes_and_triggers.sql`
 4. `20260714213000_phase_3_service_table_policies.sql`
+5. `20260714214000_phase_3_covering_indexes.sql`
 
 RLS verification queries are documented in `supabase/tests/phase_3_rls_verification.sql`. Run write-denial checks only against a disposable Supabase branch or inside an explicitly rolled-back test transaction.
