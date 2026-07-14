@@ -17,7 +17,12 @@ export const registerSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({ email });
-export const resetPasswordSchema = z.object({ password });
+export const resetPasswordSchema = z
+  .object({ password, confirmPassword: password })
+  .refine((input) => input.password === input.confirmPassword, {
+    message: "PASSWORD_CONFIRMATION_MISMATCH",
+    path: ["confirmPassword"],
+  });
 
 export function safeNextPath(value: unknown, fallback = "/dashboard") {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return fallback;
