@@ -9,8 +9,7 @@ const GENERIC_ERROR = "Не вдалося створити акаунт. Пер
 export async function POST(request: NextRequest) {
   try {
     const input = registerSchema.parse(await request.json());
-    const identity = getRequestIdentity(request, input.email);
-    await assertAuthRateLimit("register", identity);
+    await assertAuthRateLimit("register", getRequestIdentity(request, input.email));
 
     const origin = new URL(request.url).origin;
     const supabase = createSupabaseServerClient();
@@ -18,7 +17,7 @@ export async function POST(request: NextRequest) {
       email: input.email,
       password: input.password,
       options: {
-        emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${origin}/auth/callback?next=/legacy-migration`,
         data: { full_name: input.name },
       },
     });
@@ -69,7 +68,20 @@ export async function POST(request: NextRequest) {
       metadata: { provider: "password", email_verification_required: !data.session },
     });
 
-    return NextResponse.json({ ok: true, requiresEmailVerification: !data.session }, { status: data.session ? 200 : 202 });
+    const response = NextResponse.json(
+      { ok: true, requiresEmailVerification: !data.session, next: data.session ? "/legacy-migration" : null },
+      { status: data.session ? 200 : 202 },
+    );
+    if (data.session) {
+      response.cookies.set("altr_legacy_review", "pending", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+    return response;
   } catch (error) {
     const status = error instanceof Error && error.message === "RATE_LIMITED" ? 429 : 400;
     return NextResponse.json({ error: status === 429 ? "Забагато спроб. Спробуй пізніше." : GENERIC_ERROR }, { status });
