@@ -1,13 +1,20 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createCheckout, planFromVariantId } from "@/lib/lemonSqueezy";
+
+const sdk = vi.hoisted(() => ({
+  createCheckout: vi.fn(),
+  getSubscription: vi.fn(),
+  getVariant: vi.fn(),
+  lemonSqueezySetup: vi.fn(),
+}));
+
+vi.mock("@lemonsqueezy/lemonsqueezy.js", () => sdk);
+
+import { createHostedCheckout, planFromVariantId } from "@/lib/billing/lemonsqueezy";
 
 const requiredEnvironment = {
   NEXT_PUBLIC_APP_URL: "https://altr.example",
-  NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key-at-least-20-characters",
-  SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key-at-least-20-characters",
   LEMONSQUEEZY_API_KEY: "test-lemon-key-at-least-20-characters",
   LEMONSQUEEZY_STORE_ID: "42",
   LEMONSQUEEZY_WEBHOOK_SECRET: "test-webhook-secret-at-least-20-characters",
@@ -15,63 +22,45 @@ const requiredEnvironment = {
   LEMONSQUEEZY_WORK_VARIANT_ID: "1002",
 };
 
-describe("Lemon Squeezy integration boundary", () => {
+describe("Lemon Squeezy SDK boundary", () => {
   beforeEach(() => {
-    for (const [name, value] of Object.entries(requiredEnvironment)) {
-      vi.stubEnv(name, value);
-    }
+    for (const [name, value] of Object.entries(requiredEnvironment)) vi.stubEnv(name, value);
+    sdk.createCheckout.mockReset();
+    sdk.lemonSqueezySetup.mockReset();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
-  });
+  afterEach(() => vi.unstubAllEnvs());
 
-  it("maps configured variant IDs without an external request", () => {
+  it("maps only configured variant IDs", () => {
     expect(planFromVariantId("1001")).toBe("personal");
     expect(planFromVariantId(1002)).toBe("work");
     expect(planFromVariantId("9999")).toBeNull();
   });
 
-  it("uses a mocked API and sends authenticated user metadata", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            attributes: {
-              url: "https://checkout.lemonsqueezy.com/buy/example",
-            },
-          },
-        }),
-        { status: 201, headers: { "Content-Type": "application/json" } },
-      ),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+  it("creates hosted checkout with authenticated metadata", async () => {
+    sdk.createCheckout.mockResolvedValue({
+      data: { data: { attributes: { url: "https://checkout.lemonsqueezy.com/buy/example" } } },
+      error: null,
+      statusCode: 201,
+    });
 
-    const checkout = await createCheckout({
+    const checkout = await createHostedCheckout({
       userId: "00000000-0000-4000-8000-000000000001",
       email: "user@example.com",
-      plan: "personal",
+      name: "Example User",
+      planId: "personal",
     });
 
-    expect(checkout).toEqual({
-      url: "https://checkout.lemonsqueezy.com/buy/example",
-      variantId: "1001",
+    expect(checkout).toEqual({ url: "https://checkout.lemonsqueezy.com/buy/example", variantId: 1001 });
+    expect(sdk.lemonSqueezySetup).toHaveBeenCalledWith({ apiKey: requiredEnvironment.LEMONSQUEEZY_API_KEY });
+    expect(sdk.createCheckout).toHaveBeenCalledWith(42, 1001, {
+      checkoutData: {
+        email: "user@example.com",
+        name: "Example User",
+        custom: { user_id: "00000000-0000-4000-8000-000000000001", plan_id: "personal" },
+      },
+      checkoutOptions: { discount: true, embed: false },
+      productOptions: { redirectUrl: "https://altr.example/payment/success" },
     });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-
-    const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://api.lemonsqueezy.com/v1/checkouts");
-    expect(request.headers).toMatchObject({
-      Authorization: "Bearer test-lemon-key-at-least-20-characters",
-    });
-
-    const body = JSON.parse(String(request.body));
-    expect(body.data.attributes.checkout_data.custom).toEqual({
-      supabase_user_id: "00000000-0000-4000-8000-000000000001",
-      altr_plan: "personal",
-    });
-    expect(body.data.attributes.product_options.redirect_url).toBe("https://altr.example/billing/return");
-    expect(body.data.attributes.checkout_options.discount).toBe(true);
   });
 });
