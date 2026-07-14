@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { getPublicEnv } from "@/lib/env";
 
 export { createSupabaseAdminClient } from "@/lib/supabase/admin";
+export { requireUser, requireUserId, getOptionalUser } from "@/lib/auth/server";
 
 export function createSupabaseServerClient() {
   const env = getPublicEnv();
