@@ -21,7 +21,6 @@ describe("security regressions", () => {
     const successPage = read("app/payment/success/page.tsx");
     const confirmation = read("app/payment/success/PaymentConfirmation.tsx");
     const returns = read("app/billing/return/page.tsx");
-
     expect(successPage).not.toContain("activatePaidSubscription");
     expect(confirmation).not.toContain("activatePaidSubscription");
     expect(returns).not.toContain("activatePaidSubscription");
@@ -40,11 +39,15 @@ describe("security regressions", () => {
     const route = read("app/api/webhooks/lemonsqueezy/route.ts");
     const handler = read("lib/billing/webhook-handler.ts");
     const verifier = read("lib/billing/webhook.ts");
+    const functionBody = handler.slice(handler.indexOf("export async function handleLemonWebhook"));
+    const verifyIndex = functionBody.indexOf("verifyLemonSignature(rawBody");
+    const parseIndex = functionBody.indexOf("parseVerifiedLemonWebhook(rawBody)");
+    const mutationIndex = functionBody.indexOf('.from("altr_subscriptions")');
 
     expect(route).toContain("handleLemonWebhook");
-    expect(handler.indexOf("verifyLemonSignature")).toBeGreaterThanOrEqual(0);
-    expect(handler.indexOf("parseVerifiedLemonWebhook")).toBeGreaterThan(handler.indexOf("verifyLemonSignature"));
-    expect(handler.indexOf("altr_subscriptions")).toBeGreaterThan(handler.indexOf("parseVerifiedLemonWebhook"));
+    expect(verifyIndex).toBeGreaterThanOrEqual(0);
+    expect(parseIndex).toBeGreaterThan(verifyIndex);
+    expect(mutationIndex).toBeGreaterThan(parseIndex);
     expect(verifier).toContain("timingSafeEqual");
     expect(verifier).toContain("left.length === right.length");
   });
