@@ -31,5 +31,12 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn lint
       - run: yarn typecheck
-      - run: yarn test
+      - name: Unit and integration tests
+        run: yarn test --reporter=json --outputFile=test-results.json
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-test-results
+          path: test-results.json
       - run: yarn build
