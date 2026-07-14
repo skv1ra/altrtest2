@@ -1,0 +1,22 @@
+name: Phase 3 Export
+
+on:
+  pull_request:
+    branches: [agent/phase-2-supabase-auth]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Archive repository
+        shell: bash
+        run: tar --exclude=.git --exclude=node_modules --exclude=.next -czf phase3-repository.tar.gz .
+      - name: Upload repository
+        uses: actions/upload-artifact@
