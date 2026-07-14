@@ -1,3 +1,5 @@
 # Phase 3 database plan
 
-This branch replaces the prototype database bootstrap with ordered Supabase migrations, normalized ownership, Row Level Security, server-only billing writes, and entitlement helpers. The file is temporary planning documentation and will be updated as implementation is completed.
+This branch replaces the prototype database bootstrap with ordered Supabase migrations, normalized ownership, Row Level Security, server-only billing writes, and entitlement helpers.
+
+Implementation is being verified against the current Phase 2 runtime and the live Supabase schema. Legacy populated tables will not be dropped automatically.
