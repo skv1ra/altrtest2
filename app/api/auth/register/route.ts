@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
       user_id: data.user.id,
       email: input.email,
       name: input.name,
+      locale: input.locale,
       updated_at: new Date().toISOString(),
     });
 
@@ -62,9 +63,27 @@ export async function POST(request: NextRequest) {
       ip_address: ipAddress,
       user_agent: userAgent,
     });
-    await admin.from("altr_audit_logs").insert({
+
+    await admin.from("altr_consent_events").insert(
+      ["terms", "conversation_processing", "ai_memory"].map((consentType) => ({
+        user_id: data.user.id,
+        consent_type: consentType,
+        event_type: "accepted",
+        policy_version: input.policyVersion,
+        granted: true,
+        locale: input.locale,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        created_at: now,
+      })),
+    );
+
+    await admin.from("altr_audit_events").insert({
       user_id: data.user.id,
+      actor_type: "user",
       event_type: "auth.registered",
+      entity_type: "profile",
+      entity_id: data.user.id,
       metadata: { provider: "password", email_verification_required: !data.session },
     });
 
