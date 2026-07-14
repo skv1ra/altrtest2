@@ -6,7 +6,6 @@ import { updateCurrentProfile } from "@/lib/auth";
 
 const DONE_KEY = "altr_legacy_migration_completed_v1";
 const LEGACY_PATTERN = /^(altr|altr_|altr-)/i;
-
 type LegacyEntry = { key: string; value: unknown; raw: string };
 
 function collectLegacyEntries(): LegacyEntry[] {
@@ -27,13 +26,7 @@ export default function LegacyMigrationPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    if (localStorage.getItem(DONE_KEY) === "true") {
-      router.replace("/dashboard");
-      return;
-    }
-    setEntries(collectLegacyEntries());
-  }, [router]);
+  useEffect(() => { setEntries(collectLegacyEntries()); }, []);
 
   const safeProfile = useMemo(() => {
     const objects = entries.map((entry) => entry.value).filter((value): value is Record<string, unknown> => Boolean(value && typeof value === "object" && !Array.isArray(value)));
@@ -47,7 +40,9 @@ export default function LegacyMigrationPage() {
     };
   }, [entries]);
 
-  function finish() {
+  async function finish() {
+    const response = await fetch("/api/auth/legacy-migration/complete", { method: "POST" });
+    if (!response.ok) throw new Error("MIGRATION_COMPLETION_FAILED");
     localStorage.setItem(DONE_KEY, "true");
     router.replace("/dashboard");
     router.refresh();
@@ -69,15 +64,20 @@ export default function LegacyMigrationPage() {
     try {
       await updateCurrentProfile(Object.fromEntries(Object.entries(safeProfile).filter(([, value]) => value !== undefined)));
       entries.forEach((entry) => localStorage.removeItem(entry.key));
-      finish();
+      await finish();
     } catch {
       setMessage("Не вдалося перенести профіль. Експортуй JSON і спробуй пізніше.");
     } finally { setBusy(false); }
   }
 
-  function deleteLocalData() {
-    entries.forEach((entry) => localStorage.removeItem(entry.key));
-    finish();
+  async function deleteLocalData() {
+    setBusy(true);
+    try {
+      entries.forEach((entry) => localStorage.removeItem(entry.key));
+      await finish();
+    } catch {
+      setMessage("Не вдалося завершити очищення. Спробуй ще раз.");
+    } finally { setBusy(false); }
   }
 
   return (
@@ -91,8 +91,8 @@ export default function LegacyMigrationPage() {
         <div className="mt-8 flex flex-wrap gap-3">
           {entries.length > 0 && <button onClick={exportJson} className="glass-button rounded-full px-5 py-3 text-sm">Експортувати JSON</button>}
           {entries.length > 0 && <button disabled={busy} onClick={migrateSafeData} className="future-button rounded-full px-5 py-3 text-sm disabled:opacity-60">Перенести безпечний профіль</button>}
-          {entries.length > 0 && <button onClick={deleteLocalData} className="danger-button rounded-full px-5 py-3 text-sm">Видалити локально</button>}
-          {entries.length === 0 && <button onClick={finish} className="future-button rounded-full px-5 py-3 text-sm">Продовжити</button>}
+          {entries.length > 0 && <button disabled={busy} onClick={deleteLocalData} className="danger-button rounded-full px-5 py-3 text-sm disabled:opacity-60">Видалити локально</button>}
+          {entries.length === 0 && <button disabled={busy} onClick={() => { setBusy(true); finish().catch(() => setMessage("Не вдалося завершити перевірку.")).finally(() => setBusy(false)); }} className="future-button rounded-full px-5 py-3 text-sm disabled:opacity-60">Продовжити</button>}
         </div>
       </section>
     </main>
