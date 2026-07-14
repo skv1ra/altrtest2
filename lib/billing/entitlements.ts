@@ -10,6 +10,13 @@ export type UserEntitlement = {
   accessEndsAt: string | null;
 };
 
+type EntitlementRow = {
+  plan_id: string | null;
+  has_premium: boolean | null;
+  reason: string | null;
+  access_ends_at: string | null;
+};
+
 export async function getUserEntitlement(userId: string): Promise<UserEntitlement> {
   const { data, error } = await createSupabaseAdminClient()
     .rpc("altr_user_entitlement", { target_user_id: userId })
@@ -17,12 +24,13 @@ export async function getUserEntitlement(userId: string): Promise<UserEntitlemen
 
   if (error) throw error;
 
-  const planId = data?.plan_id === "work" || data?.plan_id === "personal" ? data.plan_id : "free";
+  const row = (data ?? null) as EntitlementRow | null;
+  const planId = row?.plan_id === "work" || row?.plan_id === "personal" ? row.plan_id : "free";
   return {
     planId,
-    hasPremium: Boolean(data?.has_premium),
-    reason: typeof data?.reason === "string" ? data.reason : "no_subscription",
-    accessEndsAt: typeof data?.access_ends_at === "string" ? data.access_ends_at : null,
+    hasPremium: Boolean(row?.has_premium),
+    reason: typeof row?.reason === "string" ? row.reason : "no_subscription",
+    accessEndsAt: typeof row?.access_ends_at === "string" ? row.access_ends_at : null,
   };
 }
 
