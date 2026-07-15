@@ -34,5 +34,18 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn lint
       - run: yarn typecheck
-      - run: yarn test
+      - name: Tests
+        id: tests
+        continue-on-error: true
+        run: yarn test > phase6-test.log 2>&1
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase6-test-log
+          path: phase6-test.log
+          retention-days: 1
+      - name: Fail when tests failed
+        if: steps.tests.outcome == 'failure'
+        run: tail -n 160 phase6-test.log && exit 1
       - run: yarn build
