@@ -51,7 +51,15 @@ jobs:
       - name: Lint
         run: yarn lint
       - name: Typecheck
-        run: yarn typecheck
+        run: yarn typecheck > typecheck.log 2>&1
+      - name: Upload typecheck diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-log
+          path: typecheck.log
+          if-no-files-found: ignore
+          retention-days: 3
       - name: Unit and integration tests
         run: yarn test
       - name: Production build
