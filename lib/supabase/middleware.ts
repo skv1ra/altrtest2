@@ -1,63 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
-
-const protectedPages = [
-  "/dashboard",
-  "/memory",
-  "/assistants",
-  "/import-conversations",
-  "/billing",
-  "/payment/success",
-  "/legacy-migration",
-];
-
-const publicApiPrefixes = ["/api/auth/", "/api/webhooks/", "/api/version", "/api/health"];
-
-function isProtected(pathname: string) {
-  if (protectedPages.some((path) => pathname === path || pathname.startsWith(`${path}/`))) return true;
-  return pathname.startsWith("/api/") && !publicApiPrefixes.some((path) => pathname.startsWith(path));
-}
-
-export function safeRedirectPath(value: string | null, fallback = "/dashboard") {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  return value;
-}
-
-export async function updateSession(request: NextRequest, requestHeaders = new Headers(request.headers)) {
-  let response = NextResponse.next({ request: { headers: requestHeaders } });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return response;
-
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request: { headers: requestHeaders } });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
-    },
-  });
-
-  const { data } = await supabase.auth.getUser();
-  const pathname = request.nextUrl.pathname;
-
-  if (!data.user && isProtected(pathname)) {
-    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "AUTH_REQUIRED" }, { status: 401 });
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/auth";
-    loginUrl.search = "";
-    loginUrl.searchParams.set("mode", "login");
-    loginUrl.searchParams.set("next", safeRedirectPath(`${pathname}${request.nextUrl.search}`));
-    return NextResponse.redirect(loginUrl);
-  }
-
-  const migrationPending = request.cookies.get("altr_legacy_review")?.value === "pending";
-  if (data.user && migrationPending && isProtected(pathname) && pathname !== "/legacy-migration") {
-    return NextResponse.redirect(new URL("/legacy-migration", request.url));
-  }
-
-  response.headers.set("Cache-Control", "private, no-store");
-  return response;
+import { NextResponse,type NextRequest } from "next/server";
+import { e2eMocksEnabled,getE2EIdentity } from "@/lib/testing/e2e-auth";
+const pages=["/dashboard","/memory","/assistants","/import-conversations","/billing","/payment/success","/legacy-migration"];
+const publicApi=["/api/auth/","/api/webhooks/","/api/version","/api/health"];
+const protectedPath=(p:string)=>pages.some(x=>p===x||p.startsWith(`${x}/`))||(p.startsWith("/api/")&&!publicApi.some(x=>p.startsWith(x)));
+export function safeRedirectPath(v:string|null,f="/dashboard"){return !v||!v.startsWith("/")||v.startsWith("//")||v.includes("\\")?f:v;}
+function redirect(request:NextRequest,p:string){if(p.startsWith("/api/"))return NextResponse.json({error:"AUTH_REQUIRED"},{status:401});const u=request.nextUrl.clone();u.pathname="/auth";u.search="";u.searchParams.set("mode","login");u.searchParams.set("next",safeRedirectPath(`${p}${request.nextUrl.search}`));return NextResponse.redirect(u);}
+export async function updateSession(request:NextRequest,requestHeaders=new Headers(request.headers)){
+ let response=NextResponse.next({request:{headers:requestHeaders}});const p=request.nextUrl.pathname;
+ if(e2eMocksEnabled()){if(getE2EIdentity(request.headers)){response.headers.set("Cache-Control","private, no-store");return response;}return protectedPath(p)?redirect(request,p):response;}
+ const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;if(!url||!key)return protectedPath(p)?redirect(request,p):response;
+ const supabase=createServerClient(url,key,{cookies:{getAll:()=>request.cookies.getAll(),setAll(values){values.forEach(({name,value})=>request.cookies.set(name,value));response=NextResponse.next({request:{headers:requestHeaders}});values.forEach(({name,value,options})=>response.cookies.set(name,value,options));}}});
+ const {data}=await supabase.auth.getUser();if(!data.user&&protectedPath(p))return redirect(request,p);
+ if(data.user&&request.cookies.get("altr_legacy_review")?.value==="pending"&&protectedPath(p)&&p!=="/legacy-migration")return NextResponse.redirect(new URL("/legacy-migration",request.url));
+ response.headers.set("Cache-Control","private, no-store");return response;
 }
