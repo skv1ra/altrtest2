@@ -4,11 +4,13 @@ import "./accessibility.css";
 import { CookieBanner } from "@/components/CookieBanner";
 import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: "Altr — Become impossible to replace",
-  description: "Altr learns how you think, decide and communicate — until it becomes your digital self.",
+  title: "Altr - Become impossible to replace",
+  description: "Altr learns how you think, decide and communicate until it becomes your digital self.",
   openGraph: {
-    title: "Altr — AI digital self",
+    title: "Altr - AI digital self",
     description: "An AI twin that learns your writing, voice, memory, routines and decisions.",
     type: "website",
   },
