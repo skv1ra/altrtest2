@@ -25,16 +25,35 @@ create table if not exists public.altr_draft_feedback (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   assistant_run_id uuid not null references public.altr_assistant_runs(id) on delete cascade,
-  outcome text not null check (outcome in ('accepted','rejected','edited','copied','rated')),
-  original_draft text not null,
-  final_draft text,
-  rating integer check (rating between 1 and 5),
-  feedback text,
-  edit_distance integer,
-  consent_to_personalization boolean not null default false,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  rating smallint,
+  created_at timestamptz not null default now()
 );
+
+alter table public.altr_draft_feedback
+  add column if not exists outcome text,
+  add column if not exists original_draft text,
+  add column if not exists final_draft text,
+  add column if not exists feedback text,
+  add column if not exists edit_distance integer,
+  add column if not exists consent_to_personalization boolean not null default false,
+  add column if not exists updated_at timestamptz not null default now();
+
+update public.altr_draft_feedback f
+set outcome = coalesce(f.outcome, case when f.rating is not null then 'rated' else coalesce(f.action, 'accepted') end),
+    original_draft = coalesce(f.original_draft, r.output_text, ''),
+    final_draft = coalesce(f.final_draft, f.edited_text),
+    feedback = coalesce(f.feedback, f.comment)
+from public.altr_assistant_runs r
+where r.id = f.assistant_run_id
+  and (f.outcome is null or f.original_draft is null or f.final_draft is null or f.feedback is null);
+
+alter table public.altr_draft_feedback alter column outcome set not null;
+alter table public.altr_draft_feedback alter column original_draft set not null;
+alter table public.altr_draft_feedback drop constraint if exists altr_draft_feedback_outcome_check;
+alter table public.altr_draft_feedback add constraint altr_draft_feedback_outcome_check
+  check (outcome in ('accepted','rejected','edited','copied','rated'));
+alter table public.altr_draft_feedback drop constraint if exists altr_draft_feedback_rating_check;
+alter table public.altr_draft_feedback add constraint altr_draft_feedback_rating_check check (rating between 1 and 5);
 
 alter table public.altr_draft_feedback enable row level security;
 
