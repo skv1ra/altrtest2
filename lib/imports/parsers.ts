@@ -171,7 +171,7 @@ function parseGenericJson(value: unknown, platform: ImportPlatform) {
 }
 
 function parseWhatsApp(text: string) {
-  const pattern = /^\[?(\d{1,2}[/.]\d{1,2}[/.]\d{2,4}),?\s+(\d{1,2}:\d{2}(?::\d{2})?(?:\s?[AP]M)?)\]?\s*[-–]\s*([^:]+):\s*(.*)$/i;
+  const pattern = /^\[?(\d{1,2}[/.]\d{1,2}[/.]\d{2,4}),?\s+(\d{1,2}:\d{2}(?::\d{2})?(?:\s?[AP]M)?)\]?\s*(?:[-–]\s*)?([^:]+):\s*(.*)$/i;
   const messages: ParsedMessage[] = [];
   for (const line of text.split(/\r?\n/)) {
     if (line.length > IMPORT_LIMITS.lineLength) throw new Error("LINE_TOO_LONG");
