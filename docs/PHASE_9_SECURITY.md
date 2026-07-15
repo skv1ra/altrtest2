@@ -21,3 +21,7 @@ Security-sensitive operations continue to write audit events without storing raw
 ## Sentry
 
 Sentry is intentionally not installed in Phase 9. It remains optional and should only initialize when a DSN is configured. Any future integration must disable default collection of request bodies and scrub conversation and memory data before transport.
+
+## Verification
+
+The migration is tested against the live Supabase project, and Vercel preview builds run linting, type checking, tests, and the production Next.js build.
