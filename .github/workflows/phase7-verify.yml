@@ -44,19 +44,19 @@ jobs:
       - name: Configured AI environment passes
         run: yarn verify:ai-env
       - run: yarn lint
-      - name: TypeScript
-        id: typecheck
+      - run: yarn typecheck
+      - name: Tests
+        id: tests
         continue-on-error: true
-        run: yarn typecheck > phase7-typecheck.log 2>&1
-      - name: Upload typecheck log
+        run: yarn test > phase7-test.log 2>&1
+      - name: Upload test log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase7-typecheck-log
-          path: phase7-typecheck.log
+          name: phase7-test-log
+          path: phase7-test.log
           retention-days: 1
-      - name: Fail when TypeScript failed
-        if: steps.typecheck.outcome == 'failure'
-        run: tail -n 200 phase7-typecheck.log && exit 1
-      - run: yarn test
+      - name: Fail when tests failed
+        if: steps.tests.outcome == 'failure'
+        run: tail -n 220 phase7-test.log && exit 1
       - run: yarn build
