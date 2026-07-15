@@ -7,6 +7,7 @@ alter table public.altr_conversation_imports
   add column if not exists extraction_status text not null default 'pending',
   add column if not exists extraction_error text,
   add column if not exists extraction_attempts integer not null default 0,
+  add column if not exists extraction_cursor integer not null default 0,
   add column if not exists extraction_started_at timestamptz,
   add column if not exists extraction_completed_at timestamptz;
 
@@ -37,6 +38,9 @@ create table if not exists public.altr_draft_feedback (
 
 alter table public.altr_draft_feedback enable row level security;
 
+drop policy if exists "users read own draft feedback" on public.altr_draft_feedback;
+drop policy if exists "users insert own draft feedback" on public.altr_draft_feedback;
+drop policy if exists "users update own draft feedback" on public.altr_draft_feedback;
 create policy "users read own draft feedback" on public.altr_draft_feedback
   for select to authenticated using ((select auth.uid()) = user_id);
 create policy "users insert own draft feedback" on public.altr_draft_feedback
