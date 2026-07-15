@@ -12,6 +12,9 @@ const serverSchema = z.object({
   LEMONSQUEEZY_WORK_VARIANT_ID: z.string().min(1),
   OPENAI_API_KEY: z.string().min(20).optional(),
   RESEND_API_KEY: z.string().min(20).optional(),
+  PRIVACY_EMAIL: z.string().email().optional(),
+  SUPPORT_EMAIL: z.string().email().optional(),
+  DELETION_REQUEST_EMAIL_FROM: z.string().min(3).optional(),
 });
 
 const publicSchema = z.object({
@@ -43,6 +46,9 @@ export function getServerEnv() {
     LEMONSQUEEZY_WORK_VARIANT_ID: process.env.LEMONSQUEEZY_WORK_VARIANT_ID,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    PRIVACY_EMAIL: process.env.PRIVACY_EMAIL,
+    SUPPORT_EMAIL: process.env.SUPPORT_EMAIL,
+    DELETION_REQUEST_EMAIL_FROM: process.env.DELETION_REQUEST_EMAIL_FROM,
   });
 }
 
