@@ -22,8 +22,11 @@ describe("security regressions", () => {
   });
   it("verifies webhook signatures before processing billing mutations", () => {
     const route = read("app/api/webhooks/lemonsqueezy/route.ts"); const handler = read("lib/billing/webhook-handler.ts"); const verifier = read("lib/billing/webhook.ts");
-    const body = handler.slice(handler.indexOf("export async function handleLemonWebhook")); const verify = body.indexOf("verifyLemonSignature(rawBody"); const parse = body.indexOf("parseVerifiedLemonWebhook(rawBody)"); const mutation = body.indexOf("upsertSubscription(");
-    expect(route).toContain("handleLemonWebhook"); expect(verify).toBeGreaterThanOrEqual(0); expect(parse).toBeGreaterThan(verify); expect(mutation).toBeGreaterThan(parse); expect(verifier).toContain("timingSafeEqual"); expect(verifier).toContain("left.length === right.length");
+    const body = handler.slice(handler.indexOf("export async function handleLemonWebhook"));
+    const verify = body.indexOf("verifyLemonSignature(rawBody");
+    const parse = body.indexOf("parseVerifiedLemonWebhook(rawBody)");
+    const eventStorage = body.indexOf('from("altr_billing_webhook_events")');
+    expect(route).toContain("handleLemonWebhook"); expect(verify).toBeGreaterThanOrEqual(0); expect(parse).toBeGreaterThan(verify); expect(eventStorage).toBeGreaterThan(parse); expect(verifier).toContain("timingSafeEqual"); expect(verifier).toContain("left.length === right.length");
   });
   it("limits checkout input to the application plan ID", () => {
     const checkout = read("app/api/billing/checkout/route.ts"); const validation = read("lib/billing/checkout-validation.ts");
