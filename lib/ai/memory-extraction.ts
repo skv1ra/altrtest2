@@ -6,9 +6,11 @@ import { getUserEntitlement } from "@/lib/billing/entitlements";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   assertEmbeddingConfiguration,
+  createResponse,
   OPENAI_EMBEDDING_MODEL,
   OPENAI_RESPONSE_MODEL,
   requireOpenAI,
+  responseOutputText,
 } from "@/lib/ai/openai";
 
 const categorySchema = z.enum([
@@ -136,7 +138,7 @@ export async function processMemoryExtractionBatch(userId: string, importId: str
     }).filter((message) => message.content.length > 0);
 
     const openai = requireOpenAI();
-    const response = await openai.responses.create({
+    const response = await createResponse(openai, {
       model: OPENAI_RESPONSE_MODEL,
       max_output_tokens: 1_800,
       input: [
@@ -153,10 +155,10 @@ export async function processMemoryExtractionBatch(userId: string, importId: str
           strict: true,
           schema: EXTRACTION_SCHEMA,
         },
-      } as never,
+      },
     });
 
-    const parsed = extractionSchema.parse(JSON.parse(response.output_text));
+    const parsed = extractionSchema.parse(JSON.parse(responseOutputText(response)));
     assertEmbeddingConfiguration();
     let created = 0;
     const serverClient = createSupabaseServerClient();
