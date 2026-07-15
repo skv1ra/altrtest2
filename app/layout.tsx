@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CookieBanner } from "@/components/CookieBanner";
+import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 
 export const metadata: Metadata = {
   title: "Altr — Become impossible to replace",
@@ -14,8 +15,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="bg-ink">
-      <body className="noise antialiased">{children}<CookieBanner /></body>
+    <html lang="uk" suppressHydrationWarning className="bg-ink">
+      <body className="noise antialiased">
+        <LocaleHtmlSync />
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   );
 }
