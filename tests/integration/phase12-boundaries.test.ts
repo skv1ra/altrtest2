@@ -14,8 +14,10 @@ describe("server-authoritative billing boundaries", () => {
     expect(verify).toBeGreaterThanOrEqual(0); expect(parse).toBeGreaterThan(verify); expect(eventWrite).toBeGreaterThan(verify); expect(body).toContain("status: 401");
   });
   it("quarantines unknown variants before subscription mutation", () => {
-    const body = handlerBody(); const quarantine = body.indexOf('finish("quarantined", "UNKNOWN_VARIANT")'); const mutation = body.indexOf("upsertSubscription(");
-    expect(quarantine).toBeGreaterThanOrEqual(0); expect(mutation).toBeGreaterThan(quarantine);
+    const body = handlerBody(); const quarantine = body.indexOf('finish("quarantined", "UNKNOWN_VARIANT")');
+    const afterQuarantine = body.slice(quarantine);
+    const subscriptionMutation = afterQuarantine.indexOf('from("altr_subscriptions").select("id")');
+    expect(quarantine).toBeGreaterThanOrEqual(0); expect(subscriptionMutation).toBeGreaterThan(0);
   });
   it("does not activate subscriptions from the payment success URL", () => {
     const page = read("app/payment/success/PaymentConfirmation.tsx"); expect(page).toContain('fetch("/api/billing/me"'); expect(page).toContain("This page cannot activate a plan"); expect(page).not.toMatch(/activatePaidSubscription|subscription.*insert|plan.*update/i);
