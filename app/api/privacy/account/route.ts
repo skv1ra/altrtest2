@@ -39,60 +39,56 @@ async function deletePrivateStorage(admin: SupabaseClient, userId: string) {
   }
 }
 
-async function ensure(error: { message: string } | null, operation: string) {
+function ensure(error: { message: string } | null, operation: string) {
   if (error) throw new Error(`${operation}:${error.message}`);
 }
 
-async function deleteDatabaseData(admin: SupabaseClient, userId: string, requestId: string, subjectHash: string) {
-  await ensure((await admin.from("altr_subscriptions").update({ user_id: null, deleted_subject_hash: subjectHash, lemon_squeezy_customer_id: null, provider_customer_id: null }).eq("user_id", userId)).error, "ANONYMIZE_SUBSCRIPTIONS_FAILED");
-  await ensure((await admin.from("altr_invoices").update({ user_id: null, deleted_subject_hash: subjectHash, raw_payload: {} }).eq("user_id", userId)).error, "ANONYMIZE_INVOICES_FAILED");
-  await ensure((await admin.from("altr_billing_orders").update({ user_id: null, deleted_subject_hash: subjectHash, provider_customer_id: null, raw_payload: {} }).eq("user_id", userId)).error, "ANONYMIZE_ORDERS_FAILED");
-  await ensure((await admin.from("altr_billing_invoices").update({ user_id: null, deleted_subject_hash: subjectHash, raw_payload: {} }).eq("user_id", userId)).error, "ANONYMIZE_BILLING_INVOICES_FAILED");
+async function prepareDatabaseDeletion(admin: SupabaseClient, userId: string, requestId: string, subjectHash: string) {
+  ensure((await admin.from("altr_subscriptions").update({ user_id: null, deleted_subject_hash: subjectHash, lemon_squeezy_customer_id: null, provider_customer_id: null }).eq("user_id", userId)).error, "ANONYMIZE_SUBSCRIPTIONS_FAILED");
+  ensure((await admin.from("altr_invoices").update({ user_id: null, deleted_subject_hash: subjectHash, raw_payload: {} }).eq("user_id", userId)).error, "ANONYMIZE_INVOICES_FAILED");
+  ensure((await admin.from("altr_billing_orders").update({ user_id: null, deleted_subject_hash: subjectHash, provider_customer_id: null, raw_payload: {} }).eq("user_id", userId)).error, "ANONYMIZE_ORDERS_FAILED");
+  ensure((await admin.from("altr_billing_invoices").update({ user_id: null, deleted_subject_hash: subjectHash, raw_payload: {} }).eq("user_id", userId)).error, "ANONYMIZE_BILLING_INVOICES_FAILED");
 
   const deletionOrder = [
-    "altr_draft_feedback",
-    "altr_memory_sources",
-    "altr_assistant_runs",
-    "altr_draft_replies",
-    "altr_messages",
-    "altr_memories",
-    "altr_conversations",
-    "altr_assistant_configs",
-    "altr_conversation_imports",
-    "altr_data_connections",
-    "altr_consent_history",
-    "altr_consent_events",
-    "altr_consents",
-    "altr_user_preferences",
-    "altr_usage_counters",
-    "altr_profiles",
-    "altr_audit_logs",
-    "altr_audit_events",
+    "altr_draft_feedback", "altr_memory_sources", "altr_assistant_runs", "altr_draft_replies",
+    "altr_messages", "altr_memories", "altr_conversations", "altr_assistant_configs",
+    "altr_conversation_imports", "altr_data_connections", "altr_consent_history",
+    "altr_consent_events", "altr_consents", "altr_user_preferences", "altr_usage_counters",
+    "altr_profiles", "altr_audit_logs", "altr_audit_events",
   ];
   for (const table of deletionOrder) {
-    await ensure((await admin.from(table).delete().eq("user_id", userId)).error, `DELETE_${table.toUpperCase()}_FAILED`);
+    ensure((await admin.from(table).delete().eq("user_id", userId)).error, `DELETE_${table.toUpperCase()}_FAILED`);
   }
 
-  await ensure((await admin.from("altr_deletion_requests").delete().eq("user_id", userId).neq("id", requestId)).error, "DELETE_OLD_REQUESTS_FAILED");
-  await ensure((await admin.from("altr_deletion_request_history").update({ actor_user_id: null }).eq("request_id", requestId)).error, "ANONYMIZE_HISTORY_FAILED");
-  await ensure((await admin.from("altr_deletion_requests").update({
+  ensure((await admin.from("altr_deletion_requests").delete().eq("user_id", userId).neq("id", requestId)).error, "DELETE_OLD_REQUESTS_FAILED");
+  ensure((await admin.from("altr_deletion_request_history").update({ actor_user_id: null }).eq("request_id", requestId)).error, "ANONYMIZE_HISTORY_FAILED");
+  ensure((await admin.from("altr_deletion_requests").update({
     user_id: null,
     email: null,
     email_verified: false,
     verification_state: "not_required",
     subject_hash: subjectHash,
-    status: "completed",
-    processed_at: new Date().toISOString(),
-    completed_at: new Date().toISOString(),
     anonymized_at: new Date().toISOString(),
     metadata: { retained: true, retention_reason: "Privacy-request audit and permitted compliance evidence; duration is determined only after legal review." },
-  }).eq("id", requestId)).error, "FINALIZE_REQUEST_FAILED");
-  await ensure((await admin.from("altr_deletion_request_history").insert({
+  }).eq("id", requestId)).error, "ANONYMIZE_REQUEST_FAILED");
+  ensure((await admin.from("altr_deletion_request_history").insert({
+    request_id: requestId,
+    actor_type: "service",
+    from_status: "processing",
+    to_status: "processing",
+    note: "User data and storage prepared for Auth user deletion.",
+  })).error, "PREPARE_HISTORY_FAILED");
+}
+
+async function finalizeDeletion(admin: SupabaseClient, requestId: string, subjectHash: string) {
+  const now = new Date().toISOString();
+  ensure((await admin.from("altr_deletion_requests").update({ status: "completed", processed_at: now, completed_at: now, updated_at: now }).eq("id", requestId)).error, "FINALIZE_REQUEST_FAILED");
+  ensure((await admin.from("altr_deletion_request_history").insert({
     request_id: requestId,
     actor_type: "service",
     from_status: "processing",
     to_status: "completed",
-    note: "User-generated data deleted; permitted billing/compliance metadata anonymized.",
+    note: "Supabase Auth user deleted; permitted billing/compliance metadata remains anonymized.",
     metadata: { subject_hash: subjectHash },
   })).error, "FINALIZE_HISTORY_FAILED");
 }
@@ -132,7 +128,7 @@ export async function DELETE(request: NextRequest) {
     if (requestError || !deletionRequest) throw new Error("DELETION_REQUEST_CREATE_FAILED");
     deletionRequestId = deletionRequest.id;
 
-    await ensure((await admin.from("altr_deletion_request_history").insert({
+    ensure((await admin.from("altr_deletion_request_history").insert({
       request_id: deletionRequest.id,
       actor_type: "user",
       actor_user_id: user.id,
@@ -141,15 +137,16 @@ export async function DELETE(request: NextRequest) {
     })).error, "DELETION_HISTORY_CREATE_FAILED");
 
     await deletePrivateStorage(admin, user.id);
-    await deleteDatabaseData(admin, user.id, deletionRequest.id, subjectHash);
+    await prepareDatabaseDeletion(admin, user.id, deletionRequest.id, subjectHash);
     const { error: authError } = await admin.auth.admin.deleteUser(user.id);
     if (authError) throw new Error(`AUTH_DELETE_FAILED:${authError.message}`);
+    await finalizeDeletion(admin, deletionRequest.id, subjectHash);
 
     return NextResponse.json({ ok: true, reference, retained: "Only anonymized records permitted for reviewed financial, fraud-prevention, privacy-audit, or compliance purposes may remain. No fixed retention period is asserted." });
   } catch (error) {
     const message = error instanceof Error ? error.message : "ACCOUNT_DELETE_FAILED";
     if (deletionRequestId) {
-      await admin.from("altr_deletion_requests").update({ status: "rejected", metadata: { processing_error: message.slice(0, 500) } }).eq("id", deletionRequestId).eq("status", "processing");
+      await admin.from("altr_deletion_requests").update({ status: "rejected", metadata: { processing_error: message.slice(0, 500) } }).eq("id", deletionRequestId);
       await admin.from("altr_deletion_request_history").insert({ request_id: deletionRequestId, actor_type: "service", from_status: "processing", to_status: "rejected", note: "Deletion stopped because a protected step failed." });
     }
     const status = message === "AUTH_REQUIRED" ? 401 : message === "RATE_LIMITED" ? 429 : message.startsWith("[") ? 400 : 500;
