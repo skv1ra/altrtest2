@@ -19,13 +19,6 @@ const EXPORT_TABLES = [
   "altr_deletion_requests",
 ] as const;
 
-const BILLING_SELECTS = {
-  altr_subscriptions: "id,plan,status,provider,renews_at,ends_at,trial_ends_at,cancelled,test_mode,created_at,updated_at",
-  altr_invoices: "id,provider,amount,currency,status,receipt_url,created_at,paid_at",
-  altr_billing_orders: "id,provider,plan_id,status,amount,currency,test_mode,receipt_url,ordered_at,created_at,updated_at",
-  altr_billing_invoices: "id,provider,status,amount,currency,receipt_url,issued_at,paid_at,created_at,updated_at",
-} as const;
-
 export type UserExport = {
   schemaVersion: "phase-8-v1";
   generatedAt: string;
@@ -44,12 +37,20 @@ export async function buildUserExport(user: { id: string; email?: string | null;
     data[table] = result.data ?? [];
   }
 
-  const billingMetadata: Record<string, unknown[]> = {};
-  for (const [table, select] of Object.entries(BILLING_SELECTS)) {
-    const result = await admin.from(table).select(select).eq("user_id", user.id).order("created_at", { ascending: true });
-    if (result.error) throw new Error(`EXPORT_FAILED:${table}`);
-    billingMetadata[table] = result.data ?? [];
-  }
+  const subscriptionResult = await admin.from("altr_subscriptions").select("id,plan,status,provider,renews_at,ends_at,trial_ends_at,cancelled,test_mode,created_at,updated_at").eq("user_id", user.id).order("created_at", { ascending: true });
+  const invoiceResult = await admin.from("altr_invoices").select("id,provider,amount,currency,status,receipt_url,created_at,paid_at").eq("user_id", user.id).order("created_at", { ascending: true });
+  const orderResult = await admin.from("altr_billing_orders").select("id,provider,plan_id,status,amount,currency,test_mode,receipt_url,ordered_at,created_at,updated_at").eq("user_id", user.id).order("created_at", { ascending: true });
+  const billingInvoiceResult = await admin.from("altr_billing_invoices").select("id,provider,status,amount,currency,receipt_url,issued_at,paid_at,created_at,updated_at").eq("user_id", user.id).order("created_at", { ascending: true });
+  const billingResults = [subscriptionResult, invoiceResult, orderResult, billingInvoiceResult];
+  const billingError = billingResults.find((result) => result.error)?.error;
+  if (billingError) throw new Error("EXPORT_FAILED:BILLING_METADATA");
+
+  const billingMetadata: Record<string, unknown[]> = {
+    altr_subscriptions: subscriptionResult.data ?? [],
+    altr_invoices: invoiceResult.data ?? [],
+    altr_billing_orders: orderResult.data ?? [],
+    altr_billing_invoices: billingInvoiceResult.data ?? [],
+  };
 
   return {
     schemaVersion: "phase-8-v1",
