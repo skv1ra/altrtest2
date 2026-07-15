@@ -1,4 +1,4 @@
-export const LEGAL_CONFIG = {
+export const LEGAL_CONFIG: Readonly<Record<string, string>> = {
   LEGAL_ENTITY_NAME: "[NEEDS OWNER INPUT: legal entity or individual controller name]",
   TRADING_NAME: "Altr",
   COMPANY_COUNTRY: "[NEEDS OWNER INPUT: country of establishment or residence]",
@@ -17,6 +17,11 @@ export const LEGAL_CONFIG = {
   INTERNATIONAL_TRANSFER_MECHANISM: "[NEEDS OWNER INPUT: applicable transfer mechanism and provider regions]",
   DATA_RETENTION_PERIOD: "[NEEDS OWNER INPUT: retention schedule by data category]",
   BACKUP_RETENTION_PERIOD: "[NEEDS OWNER INPUT: backup retention and deletion cycle]",
+  AVAILABLE_IN_EEA: "[NEEDS OWNER INPUT: whether the service launches in the EEA]",
+  AVAILABLE_IN_UK: "[NEEDS OWNER INPUT: whether the service launches in the United Kingdom]",
+  AVAILABLE_IN_UKRAINE: "[NEEDS OWNER INPUT: whether the service launches in Ukraine]",
+  AVAILABLE_IN_USA: "[NEEDS OWNER INPUT: whether the service launches in the United States]",
+  AVAILABLE_IN_CALIFORNIA: "[NEEDS OWNER INPUT: whether the service launches in California]",
 
   HOSTING_PROVIDER_NAME: "Vercel",
   AUTH_PROVIDER_NAME: "Supabase Auth",
@@ -49,10 +54,10 @@ export const LEGAL_CONFIG = {
   DATA_DELETION_VERSION: "draft-2026-07-15",
   DATA_DELETION_LAST_UPDATED: "2026-07-15",
   COOKIE_CONSENT_VERSION: "2.0",
-} as const;
+};
 
 export const REQUIRED_LEGAL_PLACEHOLDERS = Object.entries(LEGAL_CONFIG)
-  .filter(([, value]) => typeof value === "string" && value.includes("[NEEDS OWNER INPUT"))
+  .filter(([, value]) => value.includes("[NEEDS OWNER INPUT"))
   .map(([key]) => key);
 
 export const hasUnresolvedLegalConfig = REQUIRED_LEGAL_PLACEHOLDERS.length > 0;
