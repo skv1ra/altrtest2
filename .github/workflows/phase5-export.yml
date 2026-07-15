@@ -1,8 +1,8 @@
 name: Phase 5 Export
 
 on:
-  push:
-    branches: [agent/phase-5-server-authoritative-state]
+  pull_request:
+    branches: [agent/phase-4-lemon-squeezy-billing]
   workflow_dispatch:
 
 permissions:
