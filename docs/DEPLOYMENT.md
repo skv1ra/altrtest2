@@ -1,47 +1,37 @@
 # Deployment
 
-## Supported toolchain
+## Completed in code
 
-- Node.js: 24.x
-- Package manager: Yarn 1.22.22
-- Lockfile: `yarn.lock` is required and committed
+The repository pins Node.js 24.x and Yarn 1.22.22. `vercel.json` uses a frozen Yarn install and `yarn build`. CI runs lint, typecheck, unit/integration tests, production build and Playwright with mocked external services.
 
-Local and CI installations must use:
+## Account-owner deployment steps
+
+1. Connect the repository to Vercel.
+2. Keep the framework as Next.js and use repository commands from `vercel.json`.
+3. Configure Development, Preview and Production variables from `ENVIRONMENT.md`.
+4. Use Test-mode Lemon Squeezy resources in Preview and separate Live-mode resources in Production.
+5. Add every Vercel domain/callback to Supabase Auth URL configuration.
+6. Apply and verify ordered Supabase migrations before code that depends on them reaches Production.
+7. Run:
 
 ```bash
-yarn install --frozen-lockfile
+yarn lint
+yarn typecheck
+yarn test
+yarn build
+yarn test:e2e
+yarn verify:production
 ```
 
-Do not use `--ignore-engines` as a production workaround. Update the declared engine and dependencies deliberately instead.
-
-## Vercel
-
-The repository-owned `vercel.json` configures:
-
-```text
-Install command: yarn install --frozen-lockfile
-Build command:   yarn build
-```
-
-Vercel project settings should either inherit these commands or match them exactly. The Node.js runtime is controlled by `package.json#engines.node`.
-
-## Production deployment sequence
-
-1. Merge only after CI passes.
-2. Confirm all required Production environment variables from `docs/ENVIRONMENT.md` exist in Vercel.
-3. Deploy `main` to Production.
-4. Verify `GET /api/version` reports the expected commit SHA and `production` environment.
-5. Smoke-test sign-in, profile loading, checkout creation, and webhook delivery.
-6. Review Vercel runtime logs and Supabase logs for unexpected errors.
-
-## Preview deployments
-
-Preview environments may use a separate Supabase project or explicitly scoped non-production credentials. Add the preview callback URL to Supabase Auth URL configuration. Never point an untrusted fork preview at production service-role credentials.
+8. Deploy the release SHA to Preview and complete `MANUAL_TESTING.md`.
+9. Promote only the reviewed SHA to Production.
+10. Verify `GET /api/version`, registration, login, dashboard, memory, import, AI draft, checkout, webhook and Customer Portal.
+11. Review Vercel, Supabase, Lemon Squeezy and OpenAI logs for errors without exposing personal data.
 
 ## Rollback
 
-Use Vercel's previous successful production deployment as the immediate rollback target. Database migrations require a separate reviewed rollback or forward-fix plan; rolling back application code does not reverse Supabase schema changes.
+Roll back application code to the previous successful Vercel deployment. A code rollback does not reverse database migrations or provider events. Use a separately reviewed forward-fix or rollback migration for schema changes.
 
-## CI credentials
+## Release blockers
 
-CI uses obvious placeholder values and browser request interception. It must never receive Vercel Production secrets, Supabase service-role credentials, Lemon Squeezy keys, OpenAI keys, or Resend keys.
+Do not launch with unresolved legal placeholders, missing owner configuration, Test-mode billing IDs in Production, unsafe E2E flags, failing CI, unverified webhooks or incomplete manual tests.
