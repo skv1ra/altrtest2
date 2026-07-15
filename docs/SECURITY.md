@@ -1,43 +1,34 @@
 # Security
 
-## Secret handling
+## Completed in code
 
-- Store production secrets only in Vercel environment variables or an approved secret manager.
-- Never commit `.env`, `.env.local`, API keys, service-role keys, webhook secrets, or provider tokens.
-- Only variables intentionally prefixed with `NEXT_PUBLIC_` may be used in browser code.
-- `SUPABASE_SERVICE_ROLE_KEY`, Lemon Squeezy credentials, OpenAI credentials, and Resend credentials are server-only.
+- Supabase Auth is the identity source of truth; protected routes and APIs require an authenticated session.
+- User-owned queries are scoped by authenticated UUID and RLS remains the database boundary.
+- Service-role, Lemon Squeezy, OpenAI and email-provider credentials are server-only.
+- Checkout accepts only an allowlisted plan ID.
+- Lemon Squeezy signatures are verified before parsing or mutation; store IDs and variants are validated; replays are idempotent; unknown variants are quarantined.
+- Success URLs and local storage cannot activate subscriptions.
+- Imported content is treated as untrusted data and AI output remains draft-only.
+- Rate limits, quotas, structured redacted logging, CSP/security headers, export/deletion controls and automated regression tests are present.
+- E2E mock authentication is disabled on Vercel and rejected by production verification.
 
-## Authentication and authorization
+## Account-owner responsibilities
 
-- Treat Supabase Auth as the identity source of truth.
-- Perform sensitive authorization with the authenticated user UUID, not browser-supplied email or metadata.
-- Keep RLS enabled on exposed Supabase tables.
-- Do not use editable user metadata for authorization decisions.
-- An authenticated role alone is not object-level authorization; every user-owned query must enforce ownership.
+- Protect provider accounts with MFA and least privilege.
+- Store secrets only in approved environment/secret systems and rotate exposed values immediately.
+- Keep Test/Preview and Production resources separate.
+- Review Supabase RLS/advisors, Vercel access, webhook delivery, OpenAI usage and provider audit logs.
+- Define backups, incident response, retention and access-review procedures.
+- Do not connect untrusted fork previews to Production service-role credentials.
 
-## Billing
+## Legal/security review required
 
-- Verify the Lemon Squeezy webhook signature before any database mutation.
-- Use provider identifiers that have database uniqueness constraints for idempotency.
-- Never activate a paid plan from query parameters, a success page, local storage, or an unverified client request.
-- Keep checkout and webhook logs free of full payloads when they may contain personal data.
+Qualified review is still required for launch regions, privacy roles, retention, transfer mechanisms, subprocessors, breach response, refund handling and minimum age. Repository controls do not replace organizational policy or legal advice.
 
-## AI and imported content
+## Future integrations
 
-- Treat imported messages and files as untrusted data, not instructions.
-- Preserve the draft-only product boundary unless a separately reviewed authorization and sending system is introduced.
-- Do not include secrets, hidden prompts, or unrelated user data in model requests.
-
-## CI and tests
-
-- CI runs with placeholder configuration only.
-- External API boundaries are mocked in browser and integration tests.
-- Security regression tests protect payment activation, webhook verification, AI draft behavior, and removal of browser-local authoritative state.
-
-## Public metadata
-
-`GET /api/version` may expose package version, Git commit SHA, build time, and environment name. It must not expose environment-variable names, infrastructure credentials, database identifiers, request headers, or stack traces.
+Gmail, Calendar, messaging APIs, Operator, Negotiator and team workspaces will require new OAuth scopes, token storage, permission boundaries, audit events and threat modeling. They are not covered as completed functionality.
 
 ## Reporting
 
-Do not post suspected vulnerabilities, keys, or user data in public issues. Revoke exposed credentials immediately, inspect provider audit logs, and document the incident privately before deploying a fix.
+Do not post vulnerabilities, credentials or user data in public issues. Revoke affected credentials, preserve relevant audit evidence and coordinate a private fix and disclosure process.
