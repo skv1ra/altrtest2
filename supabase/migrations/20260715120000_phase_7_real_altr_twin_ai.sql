@@ -25,6 +25,9 @@ create table if not exists public.altr_draft_feedback (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   assistant_run_id uuid not null references public.altr_assistant_runs(id) on delete cascade,
+  action text,
+  edited_text text,
+  comment text,
   rating smallint,
   created_at timestamptz not null default now()
 );
@@ -60,12 +63,11 @@ alter table public.altr_draft_feedback enable row level security;
 drop policy if exists "users read own draft feedback" on public.altr_draft_feedback;
 drop policy if exists "users insert own draft feedback" on public.altr_draft_feedback;
 drop policy if exists "users update own draft feedback" on public.altr_draft_feedback;
-create policy "users read own draft feedback" on public.altr_draft_feedback
-  for select to authenticated using ((select auth.uid()) = user_id);
-create policy "users insert own draft feedback" on public.altr_draft_feedback
-  for insert to authenticated with check ((select auth.uid()) = user_id);
-create policy "users update own draft feedback" on public.altr_draft_feedback
-  for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "draft feedback own all" on public.altr_draft_feedback;
+create policy "draft feedback own all" on public.altr_draft_feedback
+  for all to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 create unique index if not exists altr_draft_feedback_run_outcome_idx
   on public.altr_draft_feedback(user_id, assistant_run_id, outcome);
