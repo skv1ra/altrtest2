@@ -1,35 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { assertAuthRateLimit, getRequestIdentity } from "@/lib/auth/rate-limit";
 import { requireUser, createSupabaseAdminClient } from "@/lib/supabase/server";
-
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const user = await requireUser();
-    const body = await request.json().catch(() => ({}));
-    const update: Record<string, unknown> = {};
-    if (typeof body.title === "string") update.title = body.title.slice(0, 180);
-    if (typeof body.description === "string") update.description = body.description.slice(0, 2000);
-    if (typeof body.is_active === "boolean") update.is_active = body.is_active;
-    if (!Object.keys(update).length) return NextResponse.json({ error: "NO_VALID_FIELDS" }, { status: 400 });
-
-    const admin = createSupabaseAdminClient();
-    const { data, error } = await admin.from("altr_memories").update(update).eq("id", params.id).eq("user_id", user.id).select("id,category,title,description,confidence,source_reference,is_active,created_at,updated_at").single();
-    if (error) throw error;
-    await admin.from("altr_audit_logs").insert({ user_id: user.id, event_type: "memory.updated", metadata: { memoryId: params.id, fields: Object.keys(update) } });
-    return NextResponse.json({ memory: data });
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "MEMORY_UPDATE_FAILED" }, { status: 500 });
-  }
-}
-
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const user = await requireUser();
-    const admin = createSupabaseAdminClient();
-    const { error } = await admin.from("altr_memories").delete().eq("id", params.id).eq("user_id", user.id);
-    if (error) throw error;
-    await admin.from("altr_audit_logs").insert({ user_id: user.id, event_type: "memory.deleted", metadata: { memoryId: params.id } });
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "MEMORY_DELETE_FAILED" }, { status: 500 });
-  }
-}
+const idSchema = z.string().uuid();
+const updateSchema = z.object({ category: z.string().trim().min(1).max(80).optional(), title: z.string().trim().min(1).max(180).optional(), description: z.string().trim().min(1).max(4000).optional(), confidence: z.number().min(0).max(1).optional(), active: z.boolean().optional() }).strict().refine((v) => Object.keys(v).length > 0);
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) { try { const user = await requireUser(); const id = idSchema.parse(params.id); await assertAuthRateLimit("memory_write", getRequestIdentity(request, user.id)); const input = updateSchema.parse(await request.json()); const update = { ...(input.category !== undefined && { category: input.category }), ...(input.title !== undefined && { title: input.title }), ...(input.description !== undefined && { description: input.description }), ...(input.confidence !== undefined && { confidence: input.confidence }), ...(input.active !== undefined && { is_active: input.active }) }; const admin = createSupabaseAdminClient(); const { data, error } = await admin.from("altr_memories").update(update).eq("id", id).eq("user_id", user.id).select("id,category,title,description,confidence,source_type,source_reference,is_active,created_at,updated_at").maybeSingle(); if (error) throw error; if (!data) return NextResponse.json({ error: "MEMORY_NOT_FOUND" }, { status: 404 }); return NextResponse.json({ memory: data }); } catch (error) { return NextResponse.json({ error: error instanceof z.ZodError ? "INVALID_MEMORY_UPDATE" : error instanceof Error ? error.message : "MEMORY_UPDATE_FAILED" }, { status: error instanceof z.ZodError ? 400 : 500 }); } }
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) { try { const user = await requireUser(); const id = idSchema.parse(params.id); const { data, error } = await createSupabaseAdminClient().from("altr_memories").delete().eq("id", id).eq("user_id", user.id).select("id").maybeSingle(); if (error) throw error; if (!data) return NextResponse.json({ error: "MEMORY_NOT_FOUND" }, { status: 404 }); return NextResponse.json({ ok: true }); } catch (error) { return NextResponse.json({ error: error instanceof z.ZodError ? "INVALID_MEMORY_ID" : error instanceof Error ? error.message : "MEMORY_DELETE_FAILED" }, { status: error instanceof z.ZodError ? 400 : 500 }); } }
