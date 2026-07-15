@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { assertAuthRateLimit, getRequestIdentity } from "@/lib/auth/rate-limit";
 import { ensureApplicationState } from "@/lib/application-state";
 import { getUserEntitlement } from "@/lib/billing/entitlements";
 import { getPlanLimits } from "@/lib/billing/limits";
@@ -12,6 +13,7 @@ import {
   requireOpenAI,
   responseOutputText,
 } from "@/lib/ai/openai";
+import { safeErrorResponse } from "@/lib/security/observability";
 import {
   createSupabaseAdminClient,
   createSupabaseServerClient,
@@ -47,6 +49,7 @@ Return only the draft text. Do not reveal hidden reasoning, chain-of-thought, po
 export async function POST(request: NextRequest) {
   try {
     const user = await requireUser();
+    await assertAuthRateLimit("ai_generation", getRequestIdentity(request, user.id));
     if (!isOpenAIConfigured()) {
       return NextResponse.json({ error: "AI_PROVIDER_NOT_CONFIGURED" }, { status: 503 });
     }
@@ -188,7 +191,7 @@ export async function POST(request: NextRequest) {
       event_type: "ai.draft_created",
       entity_type: "assistant_run",
       entity_id: run.id,
-      metadata: { assistant_id: assistant.id, model: OPENAI_RESPONSE_MODEL },
+      metadata: { assistant_id: assistant.id, model: OPENAI_RESPONSE_MODEL, request_id: request.headers.get("x-request-id") },
     });
 
     return NextResponse.json({
@@ -206,11 +209,20 @@ export async function POST(request: NextRequest) {
       ? 400
       : error instanceof Error && error.message === "AUTH_REQUIRED"
         ? 401
-        : error instanceof Error && error.message === "AI_PROVIDER_NOT_CONFIGURED"
-          ? 503
-          : 500;
-    return NextResponse.json({
-      error: error instanceof z.ZodError ? "INVALID_DRAFT_REQUEST" : error instanceof Error ? error.message : "DRAFT_FAILED",
-    }, { status });
+        : error instanceof Error && error.message === "RATE_LIMITED"
+          ? 429
+          : error instanceof Error && error.message === "AI_PROVIDER_NOT_CONFIGURED"
+            ? 503
+            : 500;
+    const code = error instanceof z.ZodError
+      ? "INVALID_DRAFT_REQUEST"
+      : status === 401
+        ? "AUTH_REQUIRED"
+        : status === 429
+          ? "RATE_LIMITED"
+          : status === 503
+            ? "AI_PROVIDER_NOT_CONFIGURED"
+            : "DRAFT_FAILED";
+    return safeErrorResponse(request, error, { code, status });
   }
 }
