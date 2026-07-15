@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "verify:ai-env": "node scripts/verify-ai-env.mjs",
     "format": "prettier --write --ignore-unknown .",
     "format:check": "prettier --check --ignore-unknown .",
     "check": "yarn lint && yarn typecheck && yarn test && yarn build"
@@ -26,7 +27,7 @@
     "jszip": "3.10.1",
     "lucide-react": "0.468.0",
     "next": "14.2.35",
-    "openai": "4.77.0",
+    "openai": "6.46.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "zod": "3.24.1"

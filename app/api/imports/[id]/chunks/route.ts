@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { assertAuthRateLimit, getRequestIdentity } from "@/lib/auth/rate-limit";
-import { getUserEntitlement, requirePlan } from "@/lib/billing/entitlements";
+import { getUserEntitlement } from "@/lib/billing/entitlements";
+import { getPlanLimits } from "@/lib/billing/limits";
 import { IMPORT_LIMITS } from "@/lib/imports/limits";
 import { requireUser, createSupabaseAdminClient } from "@/lib/supabase/server";
 
@@ -31,10 +32,11 @@ const chunkSchema = z.object({
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireUser();
-    await requirePlan(user.id, "personal");
     await assertAuthRateLimit("import_chunk", getRequestIdentity(request, user.id));
     const importId = idSchema.parse(params.id);
     const input = chunkSchema.parse(await request.json());
+    const entitlement = await getUserEntitlement(user.id);
+    const limits = getPlanLimits(entitlement.planId);
     const admin = createSupabaseAdminClient();
     const { data: record } = await admin
       .from("altr_conversation_imports")
@@ -52,24 +54,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       .contains("metadata", { parser_chunk: input.chunkIndex });
     if (priorChunkError) throw priorChunkError;
     if (priorChunkRows?.length) {
-      const { error: deleteError } = await admin
-        .from("altr_conversations")
-        .delete()
-        .in("id", priorChunkRows.map((row) => row.id))
-        .eq("user_id", user.id);
+      const { error: deleteError } = await admin.from("altr_conversations").delete().in("id", priorChunkRows.map((row) => row.id)).eq("user_id", user.id);
       if (deleteError) throw deleteError;
     }
 
-    const entitlement = await getUserEntitlement(user.id);
-    const maxMessages = entitlement.planId === "work" ? IMPORT_LIMITS.messages : 20_000;
     const incomingMessages = input.conversations.reduce((sum, conversation) => sum + conversation.messages.length, 0);
     const existing = await admin
       .from("altr_messages")
       .select("id,altr_conversations!inner(import_id)", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("altr_conversations.import_id", importId);
-    if ((existing.count ?? 0) + incomingMessages > maxMessages) {
-      return NextResponse.json({ error: "MESSAGE_LIMIT_REACHED" }, { status: 403 });
+    if ((existing.count ?? 0) + incomingMessages > limits.maxMessagesPerImport) {
+      return NextResponse.json({ error: "MESSAGE_LIMIT_REACHED", limits }, { status: 403 });
     }
 
     const existingConversations = await admin
@@ -77,8 +73,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("import_id", importId);
-    if ((existingConversations.count ?? 0) + input.conversations.length > IMPORT_LIMITS.conversations) {
-      return NextResponse.json({ error: "CONVERSATION_LIMIT_REACHED" }, { status: 403 });
+    if ((existingConversations.count ?? 0) + input.conversations.length > limits.maxConversationsPerImport) {
+      return NextResponse.json({ error: "CONVERSATION_LIMIT_REACHED", limits }, { status: 403 });
     }
 
     for (const conversation of input.conversations) {
@@ -120,18 +116,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         normalized_at: new Date().toISOString(),
         completed_at: new Date().toISOString(),
         error: null,
+        extraction_status: "pending",
+        extraction_error: null,
       }).eq("id", importId).eq("user_id", user.id);
       if (updateError) throw updateError;
     }
-    return NextResponse.json({ ok: true, acceptedMessages: incomingMessages, final: input.final });
+    return NextResponse.json({ ok: true, acceptedMessages: incomingMessages, final: input.final, limits });
   } catch (error) {
-    const status = error instanceof z.ZodError
-      ? 400
-      : error instanceof Error && error.message === "PLAN_REQUIRED"
-        ? 403
-        : error instanceof Error && error.message === "RATE_LIMITED"
-          ? 429
-          : 500;
+    const status = error instanceof z.ZodError ? 400 : error instanceof Error && error.message === "RATE_LIMITED" ? 429 : 500;
     return NextResponse.json({
       error: error instanceof z.ZodError ? "INVALID_IMPORT_CHUNK" : error instanceof Error ? error.message : "IMPORT_CHUNK_FAILED",
     }, { status });
