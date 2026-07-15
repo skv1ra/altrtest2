@@ -1,7 +1,42 @@
-import JSZip from "jszip";
-type ParsedMessage = { externalId?: string; senderType: "user" | "contact" | "assistant" | "system"; senderLabel?: string; content: string; sentAt: string; metadata?: Record<string, unknown> };
-type ParsedConversation = { externalId?: string; title?: string; participantSummary: string[]; startedAt?: string; lastMessageAt?: string; messages: ParsedMessage[] };
-function asDate(value: unknown) { const date = new Date(typeof value === "string" || typeof value === "number" ? value : Date.now()); return Number.isNaN(date.valueOf()) ? new Date().toISOString() : date.toISOString(); }
-function normalizeJson(value: unknown): ParsedConversation[] { const root = value as Record<string, unknown>; const raw = Array.isArray(value) ? value : Array.isArray(root?.messages) ? root.messages : []; const messages = raw.slice(0, 100000).map((item, index) => { const row = item as Record<string, unknown>; return { externalId: String(row.id ?? index), senderType: row.from === "me" || row.isOutgoing === true ? "user" as const : "contact" as const, senderLabel: String(row.from_name ?? row.sender ?? "Contact").slice(0,120), content: String(row.text ?? row.content ?? row.body ?? "").slice(0,12000), sentAt: asDate(row.date ?? row.timestamp), metadata: {} }; }).filter((m) => m.content.trim()); return messages.length ? [{ title: String(root?.name ?? "Imported conversation").slice(0,240), participantSummary: [], startedAt: messages[0]?.sentAt, lastMessageAt: messages.at(-1)?.sentAt, messages }] : []; }
-function normalizeText(text: string): ParsedConversation[] { const messages = text.split(/\r?\n/).filter(Boolean).slice(0,100000).map((line, index) => ({ externalId: String(index), senderType: "contact" as const, content: line.slice(0,12000), sentAt: new Date(Date.now() + index).toISOString() })); return messages.length ? [{ title: "Imported text", participantSummary: [], startedAt: messages[0].sentAt, lastMessageAt: messages.at(-1)?.sentAt, messages }] : []; }
-self.onmessage = async (event: MessageEvent<{ file: File }>) => { try { const file = event.data.file; let text = ""; if (file.name.toLowerCase().endsWith(".zip")) { const zip = await JSZip.loadAsync(await file.arrayBuffer()); const entry = Object.values(zip.files).find((item) => !item.dir && /\.(json|txt|html?|csv)$/i.test(item.name)); if (!entry) throw new Error("ZIP_HAS_NO_SUPPORTED_EXPORT"); text = await entry.async("text"); } else text = await file.text(); let conversations: ParsedConversation[]; try { conversations = normalizeJson(JSON.parse(text)); } catch { conversations = normalizeText(text); } if (!conversations.length) throw new Error("NO_MESSAGES_FOUND"); self.postMessage({ ok: true, conversations, preview: conversations.flatMap((c) => c.messages).slice(0,5).map((m) => ({ text: m.content.slice(0,260) })), parserVersion: "altr-browser-parser-1" }); } catch (error) { self.postMessage({ ok: false, error: error instanceof Error ? error.message : "PARSE_FAILED" }); } };
+/// <reference lib="webworker" />
+
+import { parseImport } from "@/lib/imports/parsers";
+import type { ImportPlatform } from "@/lib/imports/types";
+
+type ParseMessage = { type: "parse"; requestId: string; file: File; platform: ImportPlatform };
+type CancelMessage = { type: "cancel"; requestId: string };
+
+const controllers = new Map<string, AbortController>();
+
+self.onmessage = async (event: MessageEvent<ParseMessage | CancelMessage>) => {
+  const message = event.data;
+  if (message.type === "cancel") {
+    controllers.get(message.requestId)?.abort("IMPORT_CANCELLED");
+    return;
+  }
+
+  const controller = new AbortController();
+  controllers.set(message.requestId, controller);
+
+  try {
+    const bytes = new Uint8Array(await message.file.arrayBuffer());
+    const result = await parseImport(
+      { name: message.file.name, mimeType: message.file.type, bytes, platform: message.platform },
+      controller.signal,
+    );
+    self.postMessage({ type: "result", requestId: message.requestId, ok: true, ...result });
+  } catch (error) {
+    self.postMessage({
+      type: "result",
+      requestId: message.requestId,
+      ok: false,
+      error: controller.signal.aborted
+        ? "IMPORT_CANCELLED"
+        : error instanceof Error
+          ? error.message
+          : "PARSE_FAILED",
+    });
+  } finally {
+    controllers.delete(message.requestId);
+  }
+};
