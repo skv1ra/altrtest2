@@ -5,10 +5,12 @@ import { getUserEntitlement } from "@/lib/billing/entitlements";
 import { getPlanLimits } from "@/lib/billing/limits";
 import {
   assertEmbeddingConfiguration,
+  createResponse,
   isOpenAIConfigured,
   OPENAI_EMBEDDING_MODEL,
   OPENAI_RESPONSE_MODEL,
   requireOpenAI,
+  responseOutputText,
 } from "@/lib/ai/openai";
 import {
   createSupabaseAdminClient,
@@ -109,7 +111,7 @@ export async function POST(request: NextRequest) {
     const messageIds = recentMessages.map((message) => message.id);
     const conversationIds = [...new Set(recentMessages.map((message) => message.conversation_id))];
 
-    const response = await openai.responses.create({
+    const response = await createResponse(openai, {
       model: OPENAI_RESPONSE_MODEL,
       max_output_tokens: input.requestedLength === "short" ? 180 : input.requestedLength === "long" ? 700 : 400,
       input: [
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
       ],
     });
 
-    const draftText = response.output_text?.trim();
+    const draftText = responseOutputText(response);
     if (!draftText) throw new Error("EMPTY_DRAFT");
 
     const { data: run, error: runError } = await admin.from("altr_assistant_runs").insert({
