@@ -19,6 +19,12 @@ export type AuthRateLimitAction =
   | "data_export"
   | "account_delete";
 
+type RateLimitResult = {
+  allowed: boolean;
+  remaining: number;
+  reset_at: string;
+};
+
 const limits: Record<AuthRateLimitAction, { attempts: number; windowSeconds: number }> = {
   register: { attempts: 5, windowSeconds: 60 * 60 },
   login: { attempts: 10, windowSeconds: 15 * 60 },
@@ -58,10 +64,11 @@ export async function assertAuthRateLimit(action: AuthRateLimitAction, identity:
     .single();
 
   if (error || !data) throw new Error("RATE_LIMIT_STORAGE_FAILED");
-  if (!data.allowed) throw new Error("RATE_LIMITED");
+  const result = data as RateLimitResult;
+  if (!result.allowed) throw new Error("RATE_LIMITED");
 
   return {
-    remaining: Number(data.remaining ?? 0),
-    resetAt: String(data.reset_at),
+    remaining: Number(result.remaining ?? 0),
+    resetAt: String(result.reset_at),
   };
 }
