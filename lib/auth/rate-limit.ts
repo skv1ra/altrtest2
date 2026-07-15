@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import type { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export type AuthRateLimitAction = "register" | "login" | "forgot" | "reset" | "billing_checkout" | "import_create" | "import_chunk" | "memory_write" | "assistant_write";
+export type AuthRateLimitAction = "register" | "login" | "forgot" | "reset" | "billing_checkout" | "import_create" | "import_chunk" | "memory_write" | "assistant_write" | "privacy_request" | "data_export" | "account_delete";
 
 const limits: Record<AuthRateLimitAction, { attempts: number; windowMinutes: number }> = {
   register: { attempts: 5, windowMinutes: 60 },
@@ -15,6 +15,9 @@ const limits: Record<AuthRateLimitAction, { attempts: number; windowMinutes: num
   import_chunk: { attempts: 120, windowMinutes: 60 },
   memory_write: { attempts: 60, windowMinutes: 60 },
   assistant_write: { attempts: 30, windowMinutes: 60 },
+  privacy_request: { attempts: 5, windowMinutes: 60 },
+  data_export: { attempts: 3, windowMinutes: 60 },
+  account_delete: { attempts: 3, windowMinutes: 60 },
 };
 
 export function getRequestIdentity(request: NextRequest, email?: string) {
