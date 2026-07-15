@@ -1,0 +1,8 @@
+From sender@example.com Thu Jan  1 00:00:00 2026
+From: Sender <sender@example.com>
+Date: Thu, 1 Jan 2026 10:00:00 +0000
+Subject: Test subject
+Message-ID: <fixture@example.com>
+Content-Type: text/plain
+
+Gmail Takeout body
