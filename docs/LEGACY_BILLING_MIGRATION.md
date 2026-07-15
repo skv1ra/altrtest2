@@ -1,21 +1,30 @@
 # Legacy billing migration
 
-Lemon Squeezy is the only billing provider used by the current application runtime. Historical LiqPay records may still exist in legacy tables or archived rows and must not be treated as proof of an active subscription.
+Lemon Squeezy is the only billing provider used by the current runtime. Historical LiqPay or prototype billing records may remain for reconciliation, but they are not proof of an active subscription and must never grant premium access.
 
-## Runtime rule
+## Current runtime rules
 
-- New subscriptions and invoices use `provider = 'lemon_squeezy'`.
-- Premium access is granted only from a verified Lemon Squeezy webhook.
-- Return, success, receipt, and status URLs are read-only and cannot activate or modify a plan.
-- Client code cannot write subscription state.
+- New billing records use `provider = 'lemon_squeezy'`.
+- Paid access comes only from a valid Lemon Squeezy subscription state written by a signature-verified webhook.
+- Success, return, receipt and status pages are read-only.
+- Browser/localStorage state cannot activate a plan.
+- The authenticated user may read only their own billing summaries.
 
-## Safe migration path
+## Owner migration procedure
 
-1. Inventory historical tables and rows before making schema changes.
-2. Preserve populated legacy tables under an explicit `altr_legacy_*` name or an unexposed archive schema.
-3. Revoke `anon` and `authenticated` access to archived billing tables and keep RLS enabled where they remain exposed.
-4. Do not copy historical paid status into active subscriptions automatically.
-5. Migrate a customer only after matching the account to a verified Lemon Squeezy customer or subscription event.
-6. After retention, legal, accounting, and reconciliation requirements are confirmed, prepare a separate reviewed deletion migration. Phase 1 does not drop historical tables or rows.
+1. Inventory every historical billing table, row count, provider identifier and retention purpose.
+2. Back up records before schema or data changes.
+3. Keep legacy records under explicit archived names or an unexposed archive schema.
+4. Revoke client access and keep restrictive RLS/policies on archived data.
+5. Do not copy legacy `paid`, plan or expiry values into active Lemon Squeezy subscriptions.
+6. Match a customer only through reviewed evidence and a verified Lemon Squeezy customer/subscription event.
+7. Reconcile amounts, currency, refunds, chargebacks and accounting obligations separately from application entitlement.
+8. Define anonymization/deletion timing with accounting, privacy and legal review.
+9. Implement deletion or transformation as a separate reviewed migration with verification and rollback/forward-fix steps.
+10. Test that archived rows cannot affect `altr_user_entitlement` or current billing APIs.
 
-The ordered production migrations already default new billing records to `lemon_squeezy`. The older standalone `supabase/schema.sql` bootstrap is retired and must not be applied.
+## Important boundaries
+
+The ordered files in `supabase/migrations/` are authoritative. Retired `supabase/schema.sql` must not be used as a new production bootstrap. Test-mode Lemon Squeezy records must not be promoted into Live-mode entitlement records.
+
+No automatic historical conversion is implemented. Any future migration requires explicit owner approval, database backup, legal/accounting review and dedicated tests.
