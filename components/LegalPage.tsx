@@ -22,9 +22,9 @@ export function LegalPage({ eyebrow, title, summary, children }: { eyebrow: stri
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="mt-5 text-balance text-5xl font-medium leading-[.98] tracking-[-.06em] md:text-7xl">{title}</h1>
         <p className="mt-6 max-w-3xl text-lg leading-8 text-white/45">{summary}</p>
-        <div className="mt-7 flex flex-wrap gap-3 text-xs text-white/30"><span>Версія: 10.07.2026</span><span>•</span><span>Чинна з {legalConfig.effectiveDate}</span></div>
+        <div className="mt-7 flex flex-wrap gap-3 text-xs text-white/30"><span>Версія: {legalConfig.version}</span><span>•</span><span>{legalConfig.effectiveDate}</span></div>
 
-        {!legalDetailsComplete && <div className="legal-warning mt-9"><AlertTriangle className="h-5 w-5 flex-none" /><div><strong>Потрібне заповнення перед публічним запуском</strong><p>У файлі lib/legal.ts вкажіть юридичну назву власника Altr, адресу, контактні email, застосовне право та порядок вирішення спорів. Без цих реквізитів документи не є фінально готовими.</p></div></div>}
+        {!legalDetailsComplete && <div className="legal-warning mt-9"><AlertTriangle className="h-5 w-5 flex-none" /><div><strong>Draft — потрібні рішення власника перед production launch</strong><p>Заповніть owner-required значення у <code>lib/legal/legal-config.ts</code>, налаштуйте privacy/support контакти у production environment і пройдіть юридичну перевірку. Команда <code>yarn verify:production</code> навмисно не пропустить запуск із незаповненими значеннями.</p></div></div>}
 
         <div className="mt-12 space-y-4">{children}</div>
 
