@@ -1,31 +1,53 @@
 # Environment configuration
 
-Copy `.env.example` to `.env.local` for local development. Values in this table are configuration names, never example production secrets.
+Copy `.env.example` to `.env.local`. Never commit real values. Variables prefixed with `NEXT_PUBLIC_` may reach the browser; all other provider credentials are server-only.
 
-| Variable                           | Scope         | Required        | Purpose                                                                                                     |
-| ---------------------------------- | ------------- | --------------- | ----------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`              | Public        | Recommended     | Canonical application URL and OAuth callback base.                                                          |
-| `NEXT_PUBLIC_SUPABASE_URL`         | Public        | Yes             | Supabase project URL used by SSR/client-compatible auth helpers.                                            |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`    | Public        | Yes             | Supabase publishable/anon key. RLS remains the authorization boundary.                                      |
-| `SUPABASE_SERVICE_ROLE_KEY`        | Server only   | Yes             | Privileged server access for trusted route handlers.                                                        |
-| `LEMONSQUEEZY_API_KEY`             | Server only   | Yes for billing | Creates checkout sessions.                                                                                  |
-| `LEMONSQUEEZY_STORE_ID`            | Server only   | Yes for billing | Lemon Squeezy store identifier.                                                                             |
-| `LEMONSQUEEZY_WEBHOOK_SECRET`      | Server only   | Yes for billing | Verifies webhook signatures.                                                                                |
-| `LEMONSQUEEZY_PERSONAL_VARIANT_ID` | Server only   | Yes for billing | Maps the Personal plan to its provider variant.                                                             |
-| `LEMONSQUEEZY_WORK_VARIANT_ID`     | Server only   | Yes for billing | Maps the Work plan to its provider variant.                                                                 |
-| `OPENAI_API_KEY`                   | Server only   | Optional        | Enables real AI draft generation. Without it, the draft endpoint returns a controlled unavailable response. |
-| `RESEND_API_KEY`                   | Server only   | Optional        | Application notifications such as support or privacy requests; never billing receipts.                     |
-| `APP_BUILD_TIME`                   | Build/server  | Automatic       | Injected by `next.config.js`; may be overridden by build infrastructure.                                    |
-| `VERCEL_GIT_COMMIT_SHA`            | Vercel system | Automatic       | Exposed through `/api/version` as deployment metadata.                                                      |
-| `VERCEL_ENV`                       | Vercel system | Automatic       | `production`, `preview`, or `development` deployment name.                                                  |
+## Required groups
 
-## Environment scopes in Vercel
+**Application**
+- `NEXT_PUBLIC_APP_URL`: local URL in development; canonical HTTPS URL in Production.
 
-- Production variables apply only to production deployments.
-- Preview variables should use non-production provider resources where possible.
-- Development values are pulled locally only when explicitly needed.
-- After changing any variable, redeploy; existing deployments keep the values captured at build/runtime creation.
+**Supabase**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-## CI
+**Lemon Squeezy**
+- `LEMONSQUEEZY_API_KEY`
+- `LEMONSQUEEZY_STORE_ID`
+- `LEMONSQUEEZY_WEBHOOK_SECRET`
+- `LEMONSQUEEZY_PERSONAL_VARIANT_ID`
+- `LEMONSQUEEZY_WORK_VARIANT_ID`
 
-`.github/workflows/ci.yml` defines non-secret placeholder values. Tests must mock provider boundaries and must not be changed to require real credentials.
+Store and variant IDs must be positive numeric values. Personal and Work IDs must differ. Test-mode values belong only in local/Preview; Live-mode values belong only in Production.
+
+**OpenAI**
+- `OPENAI_API_KEY`
+- `OPENAI_RESPONSE_MODEL`
+- `OPENAI_EMBEDDING_MODEL`
+
+Production currently requires `text-embedding-3-small`; changing it needs a documented vector migration.
+
+**Contacts and optional email**
+- `PRIVACY_EMAIL` or `SUPPORT_EMAIL`
+- optional `RESEND_API_KEY`
+- `DELETION_REQUEST_EMAIL_FROM` when Resend is enabled
+
+**Optional public links**
+- `NEXT_PUBLIC_X_URL`
+- `NEXT_PUBLIC_GITHUB_URL`
+
+## Vercel scopes
+
+Use separate Development, Preview and Production values. Redeploy after any change. Never place service-role, billing, webhook, OpenAI or email-provider credentials in browser variables.
+
+CI uses obvious non-production placeholders and mocks external calls. It must not receive Production credentials.
+
+## Release verification
+
+```bash
+yarn verify:ai-env
+yarn verify:production
+```
+
+Production verification rejects missing required values, placeholders, invalid URLs/variant IDs, unresolved legal owner input and unsafe development flags.
