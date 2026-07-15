@@ -13,12 +13,13 @@ type ZipMetadata = {
 
 function assertSafeArchiveName(name: string) {
   const normalized = name.replace(/\\/g, "/");
+  const path = normalized.endsWith("/") ? normalized.slice(0, -1) : normalized;
   if (
-    !normalized ||
+    !path ||
     normalized.startsWith("/") ||
     /^[a-z]:\//i.test(normalized) ||
     normalized.includes("\u0000") ||
-    normalized.split("/").some((part) => part === ".." || part === "")
+    path.split("/").some((part) => part === ".." || part === "")
   ) {
     throw new Error("ZIP_PATH_TRAVERSAL");
   }
