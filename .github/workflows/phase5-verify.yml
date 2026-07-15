@@ -20,10 +20,10 @@ jobs:
       SUPABASE_URL: https://ci-placeholder.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ci-service-role-placeholder-at-least-twenty-characters
       LEMONSQUEEZY_API_KEY: ci-lemon-api-placeholder-at-least-twenty-characters
-      LEMONSQUEEZY_STORE_ID: ci-store
+      LEMONSQUEEZY_STORE_ID: "42"
       LEMONSQUEEZY_WEBHOOK_SECRET: ci-webhook-placeholder-at-least-twenty-characters
-      LEMONSQUEEZY_PERSONAL_VARIANT_ID: ci-personal
-      LEMONSQUEEZY_WORK_VARIANT_ID: ci-work
+      LEMONSQUEEZY_PERSONAL_VARIANT_ID: "1001"
+      LEMONSQUEEZY_WORK_VARIANT_ID: "1002"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,17 +35,4 @@ jobs:
       - run: yarn lint
       - run: yarn typecheck
       - run: yarn test
-      - name: Production build
-        id: build
-        continue-on-error: true
-        run: yarn build > phase5-build.log 2>&1
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: phase5-build-log
-          path: phase5-build.log
-          retention-days: 1
-      - name: Fail when build failed
-        if: steps.build.outcome == 'failure'
-        run: tail -n 120 phase5-build.log && exit 1
+      - run: yarn build
