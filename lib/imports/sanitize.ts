@@ -28,7 +28,7 @@ export function htmlToPlainText(html: string) {
   return normalizePlainText(decodeHtmlEntities(withBreaks.replace(/<[^>]*>/g, " ")));
 }
 
-export function normalizePlainText(value: string, maxLength = IMPORT_LIMITS.messageLength) {
+export function normalizePlainText(value: string, maxLength: number = IMPORT_LIMITS.messageLength) {
   return value
     .replace(/\u0000/g, "")
     .replace(/\r\n?/g, "\n")
