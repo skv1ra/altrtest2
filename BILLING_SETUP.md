@@ -1,68 +1,33 @@
-# Altr billing setup
+# Billing setup
 
-This build adds the LiqPay payment foundation for Altr subscriptions.
+Altr uses Lemon Squeezy as the only active billing provider through the official `@lemonsqueezy/lemonsqueezy.js` SDK. Checkout is hosted by Lemon Squeezy and created only by the authenticated server endpoint `POST /api/billing/checkout`.
 
-## Environment variables for Vercel
+The browser may send only `{ "planId": "personal" | "work" }`. The server maps that application plan to an allowlisted variant ID, prefills the authenticated Supabase user, enables Lemon Squeezy discount entry, and redirects to `/payment/success`. No local paid subscription is created during checkout.
 
-Add these in Vercel > Project > Settings > Environment Variables:
+## Webhook
 
-```env
-LIQPAY_PUBLIC_KEY=your_public_key
-LIQPAY_PRIVATE_KEY=your_private_key
-NEXT_PUBLIC_APP_URL=https://your-domain.com
-```
+Configure Lemon Squeezy to send events to:
 
-Optional email after payment:
+`POST /api/webhooks/lemonsqueezy`
 
-```env
-RESEND_API_KEY=your_resend_key
-BILLING_EMAIL_FROM=Altr <billing@your-domain.com>
-```
+The route reads the raw body, verifies `X-Signature` with HMAC SHA-256, validates the store and payload, maps only configured variants, and stores an idempotency hash before changing billing state. Failed events return 5xx so Lemon Squeezy can retry. Missing trusted user relationships become orphaned and unknown variants are quarantined without granting access.
 
-If `RESEND_API_KEY` is not configured, the app will not fail. It will log the billing email payload as a stub.
+## Current-user billing
 
-## What is included
+- `GET /api/billing/me` returns only the authenticated user's entitlement, subscription summary, and invoices.
+- `POST /api/billing/portal` obtains a fresh Customer Portal URL from the trusted stored subscription ID.
+- `/payment/success` waits for verified webhook state and never activates a plan from URL parameters.
+- `/billing` is the customer billing page; `/pricing` starts hosted checkout.
 
-- `/pricing` card payment flow through LiqPay checkout
-- automatic renewal payload foundation
-- `/api/payments/liqpay/create`
-- `/api/payments/liqpay/callback`
-- `/payment/success`
-- `/payment/cancel`
-- `/payment/receipt/[orderId]`
-- local invoice/receipt storage for MVP
-- local subscription activation after success redirect
-- paid feature gates already use the active plan system
+Customer receipts are sent and hosted by Lemon Squeezy. Altr does not manufacture local receipts or expose a public payment-email endpoint.
 
-## Production TODO
+## Environment separation
 
-This MVP does not include a real database. Before real launch, add:
+Use Lemon Squeezy **test-mode** API keys, store/variant IDs, and webhook secret for Vercel Preview. Use separate **live-mode** values for Vercel Production. Never reuse a preview webhook secret or test variant ID in production. `NEXT_PUBLIC_APP_URL` must also match the relevant environment so checkout returns to the correct deployment.
 
-- users table
-- subscriptions table
-- payments/invoices table
-- callback-based server activation
-- access control by authenticated user on the server
-- real recurring renewal state from LiqPay callbacks
+See:
 
-Do not rely on client-side activation for production billing.
-
-## Supabase database persistence
-
-This build includes Supabase persistence for billing.
-
-Run `supabase/schema.sql` in Supabase SQL Editor, then add these Vercel env variables:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
-
-The LiqPay callback now writes to:
-
-- `altr_payments`
-- `altr_subscriptions`
-- `altr_invoices`
-
-See `SUPABASE_SETUP.md` for the full setup.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for release setup;
+- [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) for required variables;
+- [`docs/SECURITY.md`](docs/SECURITY.md) for the billing trust model;
+- [`docs/LEGACY_BILLING_MIGRATION.md`](docs/LEGACY_BILLING_MIGRATION.md) for historical provider records.

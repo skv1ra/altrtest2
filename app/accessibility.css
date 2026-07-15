@@ -1,0 +1,43 @@
+/* Phase 11 accessibility layer */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid rgba(186, 230, 253, .95);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(56, 189, 248, .16);
+}
+
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+
+.mobile-menu-panel {
+  border: 1px solid rgba(186,230,253,.16);
+  background: linear-gradient(155deg,rgba(13,24,36,.98),rgba(5,10,16,.98));
+  box-shadow: 0 30px 100px rgba(0,0,0,.78), 0 0 55px rgba(56,189,248,.12);
+  backdrop-filter: blur(24px);
+}
+
+.mobile-menu-link {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  border-radius: 14px;
+  padding: 0 14px;
+  color: rgba(240,250,255,.76);
+  font-size: 14px;
+}
+.mobile-menu-link:hover { background: rgba(255,255,255,.055); color: #fff; }
+
+[role="alert"] { color: rgba(254, 202, 202, .95); }
+[aria-live="polite"] { min-height: 1.25rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hud-scan, .demo-scan, .assistant-scan, .typing-dots span, .ai-core-dot::after,
+  .hero-gradient-sweep, .hud-link-pulse, .chat-node, .core-ring, .import-spinner {
+    animation: none !important;
+  }
+  .future-button:hover, .glass-button:hover, .future-card:hover, .pricing-card:hover,
+  .assistant-card:hover, .memory-card:hover, .profile-nav-button:hover {
+    transform: none !important;
+  }
+}

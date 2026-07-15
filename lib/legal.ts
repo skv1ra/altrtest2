@@ -1,14 +1,17 @@
-export const LEGAL_VERSION = "2026-07-10";
+import { LEGAL_CONFIG, hasUnresolvedLegalConfig } from "@/lib/legal/legal-config";
+
+export const LEGAL_VERSION = LEGAL_CONFIG.PRIVACY_POLICY_VERSION;
 
 export const legalConfig = {
-  serviceName: "Altr",
-  effectiveDate: "10 липня 2026 року",
-  controllerName: "[ВКАЖІТЬ ПОВНУ ЮРИДИЧНУ НАЗВУ АБО ПІБ ФОП]",
-  controllerAddress: "[ВКАЖІТЬ ЮРИДИЧНУ АДРЕСУ ТА КРАЇНУ РЕЄСТРАЦІЇ]",
-  privacyEmail: "[ВКАЖІТЬ EMAIL ДЛЯ ПИТАНЬ ПРИВАТНОСТІ]",
-  supportEmail: "[ВКАЖІТЬ EMAIL СЛУЖБИ ПІДТРИМКИ]",
-  governingLaw: "[ВКАЖІТЬ КРАЇНУ ТА ЗАСТОСОВНЕ ПРАВО]",
-  courts: "[ВКАЖІТЬ КОМПЕТЕНТНІ СУДИ АБО ПОРЯДОК ВИРІШЕННЯ СПОРІВ]",
+  serviceName: LEGAL_CONFIG.TRADING_NAME,
+  version: LEGAL_CONFIG.PRIVACY_POLICY_VERSION,
+  effectiveDate: LEGAL_CONFIG.PRIVACY_POLICY_EFFECTIVE_DATE,
+  controllerName: LEGAL_CONFIG.LEGAL_ENTITY_NAME,
+  controllerAddress: LEGAL_CONFIG.REGISTERED_ADDRESS,
+  privacyEmail: LEGAL_CONFIG.PRIVACY_EMAIL,
+  supportEmail: LEGAL_CONFIG.SUPPORT_EMAIL,
+  governingLaw: LEGAL_CONFIG.GOVERNING_LAW,
+  courts: LEGAL_CONFIG.DISPUTE_JURISDICTION,
 } as const;
 
-export const legalDetailsComplete = !Object.values(legalConfig).some((value) => value.startsWith("[ВКАЖІТЬ"));
+export const legalDetailsComplete = !hasUnresolvedLegalConfig;

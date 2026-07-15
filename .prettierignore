@@ -1,0 +1,14 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+*.tsbuildinfo
+yarn.lock
+*.sql
+
+# Existing product UI is excluded during Phase 0 to avoid a mass format-only
+# diff. Remove these entries incrementally in a dedicated cleanup change.
+app/**
+components/**
+lib/**

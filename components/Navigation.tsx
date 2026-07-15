@@ -1,75 +1,25 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { UserRound } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Menu, UserRound, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentProfile } from "@/lib/auth";
+import { sharedCopy } from "@/lib/i18n/copy";
+import type { Lang } from "@/lib/i18n/lang-store";
 
-export type Lang = "EN" | "UA";
+export type { Lang } from "@/lib/i18n/lang-store";
+export function AiMark(){return <span aria-hidden="true" className="ai-core-dot"/>;}
 
-const labels = {
-  EN: { product: "Product", how: "How it works", memory: "Memory", assistants: "Assistants", vision: "Vision", pricing: "Pricing", profile: "Profile" },
-  UA: { product: "Продукт", how: "Як працює", memory: "Памʼять", assistants: "Асистенти", vision: "Візія", pricing: "Тарифи", profile: "Профіль" },
-};
-
-export function AiMark() {
-  return <span aria-hidden="true" className="ai-core-dot" />;
-}
-
-export function Navigation({ lang, setLang }: { lang: Lang; setLang: (lang: Lang) => void }) {
-  const t = labels[lang];
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    const syncSession = () => setSignedIn(Boolean(getCurrentProfile()));
-    syncSession();
-    window.addEventListener("altr-auth-change", syncSession);
-    window.addEventListener("storage", syncSession);
-    return () => {
-      window.removeEventListener("altr-auth-change", syncSession);
-      window.removeEventListener("storage", syncSession);
-    };
-  }, []);
-
-  return (
-    <motion.header
-      initial={{ opacity: 0, y: -12, filter: "blur(8px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed left-0 right-0 top-0 z-50 px-4 pt-4"
-    >
-      <nav className="control-bar mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
-        <a href="#top" className="group flex items-center gap-2 text-[15px] font-semibold tracking-[0.01em] text-white">
-          <span>Altr</span><AiMark />
-        </a>
-        <div className="hidden items-center gap-7 md:flex">
-          <a href="#product" className="nav-link">{t.product}</a>
-          <a href="#how" className="nav-link">{t.how}</a>
-          <Link href="/memory" className="nav-link">{t.memory}</Link>
-          <Link href="/assistants" className="nav-link">{t.assistants}</Link>
-          <Link href="/pricing" className="nav-link">{t.pricing}</Link>
-          <a href="#vision" className="nav-link">{t.vision}</a>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm tracking-[0.08em]">
-            <button onClick={() => setLang("EN")} className={`language-link ${lang === "EN" ? "text-cyan-100" : "text-white/34"}`}>EN</button>
-            <span className="text-white/16">/</span>
-            <button onClick={() => setLang("UA")} className={`language-link ${lang === "UA" ? "text-cyan-100" : "text-white/34"}`}>UA</button>
-          </div>
-          <span className="hidden h-5 w-px bg-white/[.08] sm:block" />
-          <Link
-            href={signedIn ? "/dashboard" : "/auth?mode=register"}
-            aria-label={t.profile}
-            title={t.profile}
-            className="profile-nav-button group"
-          >
-            <UserRound className="h-[17px] w-[17px]" />
-            <span className="hidden text-xs tracking-[.04em] sm:inline">{t.profile}</span>
-            {signedIn && <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-cyan-100 shadow-[0_0_10px_rgba(103,232,249,.95)]" />}
-          </Link>
-        </div>
-      </nav>
-    </motion.header>
-  );
+export function Navigation({lang,setLang}:{lang:Lang;setLang:(lang:Lang)=>void}){
+ const t=sharedCopy[lang].nav; const pathname=usePathname(); const reduced=useReducedMotion();
+ const [open,setOpen]=useState(false); const [signedIn,setSignedIn]=useState(false); const trigger=useRef<HTMLButtonElement>(null); const panel=useRef<HTMLDivElement>(null);
+ const close=useCallback(()=>{setOpen(false);window.setTimeout(()=>trigger.current?.focus(),0);},[]);
+ useEffect(()=>{let active=true; const sync=()=>getCurrentProfile().then(p=>{if(active)setSignedIn(Boolean(p));}); void sync(); window.addEventListener("altr-auth-change",sync); return()=>{active=false;window.removeEventListener("altr-auth-change",sync);};},[]);
+ useEffect(()=>{setOpen(false);},[pathname]);
+ useEffect(()=>{if(!open)return; const previous=document.activeElement as HTMLElement; panel.current?.querySelector<HTMLElement>("a,button")?.focus(); const key=(e:KeyboardEvent)=>{if(e.key==="Escape")close(); if(e.key!=="Tab"||!panel.current)return; const items=Array.from(panel.current.querySelectorAll<HTMLElement>("a[href],button:not([disabled])")); if(!items.length)return; const first=items[0],last=items[items.length-1]; if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}; document.addEventListener("keydown",key); document.body.style.overflow="hidden"; return()=>{document.removeEventListener("keydown",key);document.body.style.overflow="";previous?.focus();};},[open,close]);
+ const links=[{href:"/#product",label:t.product},{href:"/memory",label:t.memory},{href:"/assistants",label:t.assistants},{href:"/pricing",label:t.pricing},{href:signedIn?"/dashboard":"/auth?mode=register",label:t.profile}];
+ const languages=<div className="flex items-center gap-2" aria-label={t.language}>{(["EN","UA"] as Lang[]).map(code=><button type="button" key={code} aria-pressed={lang===code} onClick={()=>setLang(code)} className={lang===code?"language-link text-cyan-100":"language-link text-white/50"}>{code}</button>)}</div>;
+ return <motion.header initial={reduced?false:{opacity:0,y:-12}} animate={{opacity:1,y:0}} className="fixed inset-x-0 top-0 z-50 px-4 pt-4"><nav aria-label="Primary" className="control-bar mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6"><a href="/#top" className="flex items-center gap-2 font-semibold">Altr <AiMark/></a><div className="hidden items-center gap-7 md:flex">{links.map(x=><Link key={x.href} href={x.href} className="nav-link">{x.label}</Link>)}</div><div className="flex items-center gap-3">{languages}<Link href={signedIn?"/dashboard":"/auth?mode=register"} aria-label={t.profile} className="profile-nav-button hidden sm:inline-flex"><UserRound className="h-4 w-4"/></Link><button ref={trigger} type="button" className="profile-nav-button md:hidden" aria-label={open?t.closeMenu:t.menu} aria-expanded={open} aria-controls="mobile-navigation" onClick={()=>setOpen(v=>!v)}>{open?<X className="h-5 w-5"/>:<Menu className="h-5 w-5"/>}</button></div></nav><AnimatePresence>{open&&<motion.div initial={reduced?false:{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} className="fixed inset-0 z-[-1] bg-black/70 px-4 pt-24 md:hidden" onMouseDown={e=>{if(e.target===e.currentTarget)close();}}><div id="mobile-navigation" ref={panel} role="dialog" aria-modal="true" aria-label={t.menu} className="mobile-menu-panel mx-auto max-w-md rounded-3xl p-4">{links.map(x=><Link key={x.href} href={x.href} onClick={close} className="mobile-menu-link">{x.label}</Link>)}</div></motion.div>}</AnimatePresence></motion.header>;
 }

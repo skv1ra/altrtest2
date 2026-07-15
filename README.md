@@ -1,32 +1,70 @@
-# Altr landing page
+# Altr
 
-Premium near-future AI landing page for Altr.
+Altr is a Next.js 14 SaaS foundation for a personal AI system. Authenticated users can import approved conversation exports, review server-backed memory, configure an Altr Twin, generate draft replies, and manage Lemon Squeezy subscriptions. Supabase is the identity and data source of truth. OpenAI is called only from server routes. Raw import files are parsed locally and are not uploaded.
 
-## Account flow
+## Current status
 
-The landing-page CTA and profile button open registration/sign-in. After sign-in, users are sent to a private dashboard with their Altr profile, learning data, connections, and settings. This prototype stores accounts and sessions in the current browser so the whole flow works without external credentials. Connect a hosted authentication provider and database before a production launch.
+**Completed in code**
 
-Every new account starts on the Free plan. Premium dashboard actions redirect to `/pricing`, where users can choose Free ($0), Personal ($20/month), or Work ($40/month). Plan changes are also stored in the current browser for this prototype.
+- Supabase email/password authentication, cookie sessions, protected routes, ownership checks, ordered migrations and RLS.
+- Server-authoritative profiles, memory, imports, assistants, billing and entitlements.
+- Lemon Squeezy hosted checkout, verified/idempotent webhooks, invoices and Customer Portal.
+- OpenAI Responses API draft generation and pgvector memory retrieval.
+- Local Web Worker parsers, archive limits, data export, account deletion, security controls and automated tests.
 
-Legal pages are available at `/privacy`, `/terms`, `/cookies`, `/data-deletion`, and `/data-deletion/request`. Complete every item in `LEGAL_SETUP.md` before a public production launch.
+**Account-owner action required**
 
-Conversation imports are available at `/import-conversations`. The browser-local prototype parses manual JSON/TXT/HTML/CSV files, Telegram exports, Gmail/Google Takeout MBOX, WhatsApp TXT, Instagram/Messenger JSON, and supported files inside ZIP archives. Import history and preview snippets remain on the current device until deleted.
+- Configure Supabase, Lemon Squeezy, OpenAI and Vercel accounts and secrets.
+- Apply/verify migrations, auth URLs, email confirmation, test billing and production billing.
+- Complete every manual launch and production smoke test.
 
-The AI Memory control center is available at `/memory` with category filters, search, edit/delete controls, pause/resume learning, clear-all confirmation, and data-source placeholders. Its MVP data uses local React state as requested.
+**Legal review required**
 
-Promo codes can be entered on `/pricing`. The test code `test1` grants the Work plan for 30 days once per local account.
+- Resolve every owner placeholder in `lib/legal/legal-config.ts`.
+- Obtain qualified review of policies, launch regions, retention, refunds, renewals, liability and transfer mechanisms.
 
-The three-assistant frontend MVP is available at `/assistants`. It includes Altr Twin, Operator, Negotiator, local configuration controls, a capability matrix, behavior simulation, safety controls, and EN/UA interface copy.
+**Optional future integrations**
 
-Reliable accounts across refreshes, Vercel preview domains, browsers, and devices require server authentication and a database. The current localStorage account prototype is origin-specific and must not be treated as production authentication.
+Gmail sync, improved Telegram/WhatsApp/Meta imports, Google Calendar, Operator, Negotiator and team workspaces are roadmap items. They are not complete.
 
-## Run locally
+## Local setup
+
+Requirements: Node.js 24.x and Yarn 1.22.22.
 
 ```bash
-npm install
-npm run dev
+cp .env.example .env.local
+yarn install --frozen-lockfile
+yarn dev
 ```
 
-## Deploy
+Configure the services first:
 
-Push the project root to GitHub and import it into Vercel. The root must contain `app`, `components`, `package.json`, `next.config.js`, and Tailwind config files.
+1. [Environment variables](docs/ENVIRONMENT.md)
+2. [Supabase](docs/SUPABASE_SETUP.md)
+3. [Lemon Squeezy](docs/LEMONSQUEEZY_SETUP.md)
+4. [OpenAI](docs/OPENAI_SETUP.md)
+5. [Deployment](docs/DEPLOYMENT.md)
+
+## Quality gates
+
+```bash
+yarn lint
+yarn typecheck
+yarn test
+yarn build
+yarn test:e2e
+yarn verify:production
+```
+
+`yarn verify:production` is intentionally stricter than local development. It rejects missing production configuration, unresolved legal placeholders and unsafe flags such as `ALTR_E2E_MOCKS`.
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security](docs/SECURITY.md)
+- [Legal launch checklist](docs/LEGAL_LAUNCH_CHECKLIST.md)
+- [Manual testing](docs/MANUAL_TESTING.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Legacy billing migration](docs/LEGACY_BILLING_MIGRATION.md)
+
+Non-sensitive deployment metadata is available from `GET /api/version`.

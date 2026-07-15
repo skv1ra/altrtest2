@@ -1,70 +1,51 @@
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/LegalPage";
+import { LEGAL_CONFIG } from "@/lib/legal/legal-config";
 
 export default function PrivacyPage() {
-  return <LegalPage eyebrow="LEGAL / PRIVACY" title="Privacy Policy" summary="Ця Політика пояснює, які персональні дані Altr збирає, для чого їх використовує, як створюється персональна AI-памʼять і якими правами володіє користувач.">
-    <LegalSection title="1. Сфера дії та володілець даних">
-      <p>Політика застосовується до сайту, особистого кабінету, функцій персонального AI, інтеграцій і повʼязаних сервісів Altr. Володілець персональних даних зазначений у контактному блоці наприкінці документа. Постачальники хостингу, платежів, аналітики або AI можуть виступати розпорядниками даних лише за нашими інструкціями та на підставі договорів.</p>
-    </LegalSection>
-    <LegalSection title="2. Які дані ми обробляємо">
-      <ul>
-        <li><strong>Облікові дані:</strong> імʼя, email, хеш пароля, ідентифікатор акаунта, дата реєстрації та історія входів.</li>
-        <li><strong>Профіль і підписка:</strong> назва Altr, роль, налаштування тону, тариф, підключення, параметри приватності та згоди.</li>
-        <li><strong>Переписки й імпорти:</strong> повідомлення, email, чернетки, вкладення, файли експорту, історія імпорту та метадані, які користувач свідомо вводить або підключає до Altr. Ця категорія обробляється лише після окремої згоди або коли це необхідно для явно запитаної функції.</li>
-        <li><strong>Персональна AI-памʼять:</strong> витягнуті факти, звʼязки, уподобання, тон, контекст людей, проєктів і рішень. Памʼять створюється лише після окремої згоди.</li>
-        <li><strong>Технічні дані:</strong> IP-адреса, тип пристрою й браузера, журнали безпеки, приблизне місцезнаходження, cookie та локальні ідентифікатори — якщо відповідні інструменти фактично ввімкнені.</li>
-        <li><strong>Платіжні дані:</strong> тариф, статус ідентифікатора платежу та рахунки. Повні реквізити картки має обробляти сертифікований платіжний провайдер, а не Altr.</li>
-        <li><strong>Звернення:</strong> повідомлення підтримці, запити на доступ, виправлення чи видалення даних і матеріали перевірки особи.</li>
-      </ul>
-      <p>У поточній демоверсії профіль, сесія, план, згоди, історія імпортів і короткі фрагменти попереднього перегляду зберігаються локально у браузері користувача; вихідні файли не передаються на сервер. До запуску серверного зберігання ця Політика має бути оновлена фактичним переліком постачальників і місць обробки.</p>
-    </LegalSection>
-    <LegalSection title="3. Джерела даних">
-      <p>Ми отримуємо дані безпосередньо від користувача; з підключених ним сервісів за його командою; автоматично з пристрою при користуванні сайтом; від платіжних, безпекових і технічних постачальників. Не підключайте чужі акаунти та не завантажуйте переписки третіх осіб без законних повноважень і належного повідомлення таких осіб.</p>
-    </LegalSection>
-    <LegalSection title="4. Цілі та правові підстави">
-      <ul>
-        <li><strong>Виконання договору:</strong> створення акаунта, робота кабінету, надання обраного тарифу, підтримка та безпека сервісу.</li>
-        <li><strong>Окрема згода:</strong> обробка переписок, створення AI-памʼяті, необовʼязкові cookie, маркетингові повідомлення та інші добровільні функції. Згоду можна відкликати на майбутнє.</li>
-        <li><strong>Законний інтерес:</strong> запобігання шахрайству, забезпечення стабільності, захист прав та вдосконалення функцій на агрегованих або знеособлених даних — після оцінки балансу інтересів.</li>
-        <li><strong>Юридичний обовʼязок:</strong> податковий облік, реагування на законні запити органів і виконання вимог щодо захисту даних.</li>
-      </ul>
-      <p>Ми не використовуємо зміст приватних переписок або персональну AI-памʼять для загального навчання сторонніх моделей без окремої, конкретної та добровільної згоди.</p>
-    </LegalSection>
-    <LegalSection title="5. Як працює персональна AI-памʼять">
-      <p>Altr може аналізувати наданий контент, щоб визначати стиль, повторювані рішення, повʼязаних людей, теми та контекст. Результатом є персональний профіль і памʼять, які використовуються для підготовки відповідей та чернеток. Користувач має право переглядати, виправляти, видаляти окремі спогади, вимкнути подальше навчання або видалити всю памʼять.</p>
-      <p>Altr не повинен приймати винятково автоматизовані рішення, що створюють юридичні або аналогічно значущі наслідки для людини. AI-відповіді можуть містити помилки; користувач зобовʼязаний перевіряти їх перед використанням.</p>
-    </LegalSection>
-    <LegalSection title="6. Передача даних">
-      <p>Дані можуть передаватися постачальникам хостингу, баз даних, AI-обробки, платежів, email, аналітики та безпеки лише в обсязі, необхідному для відповідної функції; професійним радникам; державним органам за належним правовим запитом; правонаступнику в межах реорганізації з належним повідомленням користувачів. Altr не продає персональні дані та не передає їх для поведінкової реклами без окремого повідомлення й механізму відмови.</p>
-    </LegalSection>
-    <LegalSection title="7. Міжнародна передача">
-      <p>Якщо дані обробляються за межами країни користувача, застосовуються передбачені законом гарантії: рішення про належність, стандартні договірні положення, договірні та технічні заходи або окрема згода, коли це допустимо. Перелік фактичних країн і постачальників має бути оприлюднений до запуску відповідних сервісів.</p>
-    </LegalSection>
-    <LegalSection title="8. Строки зберігання">
-      <ul>
-        <li>дані акаунта — доки акаунт активний та протягом мінімального строку, необхідного для закриття операцій;</li>
-        <li>переписки й AI-памʼять — доки користувач не видалить їх або не відкличе згоду, якщо немає іншої законної підстави;</li>
-        <li>платіжні й податкові записи — протягом строку, встановленого застосовним законодавством;</li>
-        <li>журнали безпеки — протягом обмеженого строку, потрібного для розслідування інцидентів;</li>
-        <li>резервні копії — до завершення стандартного циклу перезапису, із блокуванням від звичайного використання.</li>
-      </ul>
-      <p>Після завершення строку дані видаляються або незворотно знеособлюються.</p>
-    </LegalSection>
-    <LegalSection title="9. Захист даних">
-      <p>Ми застосовуємо контроль доступу, шифрування під час передавання, хешування паролів, мінімізацію даних, резервне копіювання, журналювання та перевірку постачальників. Жодна система не є абсолютно безпечною; у разі інциденту ми діятимемо відповідно до вимог щодо оцінки ризику, повідомлення органів і користувачів.</p>
-    </LegalSection>
-    <LegalSection title="10. Ваші права">
-      <p>Залежно від юрисдикції користувач може мати право знати про обробку; отримати доступ і копію; виправити; видалити; обмежити або заперечити проти обробки; перенести надані дані; відкликати згоду; відмовитися від продажу або передачі для таргетованої реклами; не зазнавати дискримінації; отримати інформацію про автоматизовану обробку; подати скаргу до наглядового органу.</p>
-      <p>Подати запит можна на сторінці <Link href="/data-deletion/request">видалення даних</Link> або за privacy-контактом. Ми можемо перевірити особу та відмовити лише з підстав, передбачених законом. Відповідь надається без невиправданої затримки та у строк відповідної юрисдикції.</p>
-    </LegalSection>
-    <LegalSection title="11. Дані дітей">
-      <p>Сервіс не призначений для осіб молодше 16 років або іншого мінімального віку цифрової згоди у відповідній країні. Ми свідомо не збираємо їхні дані без належної згоди законного представника. Якщо такі дані виявлено, зверніться для їх видалення.</p>
-    </LegalSection>
-    <LegalSection title="12. Cookie та локальне сховище">
-      <p>Інформація про необхідні та необовʼязкові технології міститься в <Link href="/cookies">Cookie Policy</Link>. Необовʼязкові технології активуються лише після згоди там, де вона потрібна.</p>
-    </LegalSection>
-    <LegalSection title="13. Зміни та контакти">
-      <p>Ми можемо оновлювати Політику через зміни функцій або законодавства. Про істотні зміни повідомляємо до їх набрання чинності та, якщо потрібно, повторно отримуємо згоду. Попередні версії мають зберігатися в архіві. Питання та скарги надсилайте за контактами внизу сторінки.</p>
-    </LegalSection>
-  </LegalPage>;
+  return (
+    <LegalPage
+      eyebrow="LEGAL / PRIVACY"
+      title="Privacy Policy"
+      summary="This draft reflects Altr's current technical architecture. Owner-required legal values remain unresolved until reviewed and completed."
+    >
+      <LegalSection title="1. Controller and contacts">
+        <p>Controller: {LEGAL_CONFIG.LEGAL_ENTITY_NAME}. Registered address: {LEGAL_CONFIG.REGISTERED_ADDRESS}. Privacy contact: {LEGAL_CONFIG.PRIVACY_EMAIL}. These values require owner input before launch.</p>
+      </LegalSection>
+      <LegalSection title="2. Providers and architecture">
+        <ul>
+          <li><strong>Vercel:</strong> hosting and serverless execution.</li>
+          <li><strong>Supabase:</strong> authentication, database and protected server-side records.</li>
+          <li><strong>Lemon Squeezy:</strong> hosted checkout, billing portal and Merchant of Record for provider-processed purchases.</li>
+          <li><strong>OpenAI:</strong> configured AI responses and embeddings.</li>
+          <li><strong>Resend:</strong> used only when email configuration is enabled.</li>
+        </ul>
+      </LegalSection>
+      <LegalSection title="3. Data processed">
+        <p>Altr may process account information, consent records, profile settings, normalized approved conversations and messages, derived memories, AI drafts, usage/security records, subscription metadata, invoices and privacy requests. Full card details are handled by Lemon Squeezy rather than stored by Altr.</p>
+      </LegalSection>
+      <LegalSection title="4. Conversation imports">
+        <p>Raw import files are parsed locally in a browser Web Worker. The raw source file is not uploaded. After explicit user approval, normalized conversations, messages, import metadata and derived reviewable memories may be stored server-side in Supabase.</p>
+      </LegalSection>
+      <LegalSection title="5. AI processing">
+        <p>Approved normalized data and selected memories may be sent to OpenAI for the requested draft or memory-extraction function. AI output remains a draft and requires user review. The product does not claim that a generated message was sent or that an external action was completed.</p>
+      </LegalSection>
+      <LegalSection title="6. Consent controls">
+        <p>Registration records separate acceptance for Terms/Privacy, conversation processing and personal AI memory. Users can withdraw conversation or memory consent in settings. Withdrawal stops future corresponding processing; existing records remain until deleted through the available controls.</p>
+      </LegalSection>
+      <LegalSection title="7. Export and deletion">
+        <p>Authenticated users can export server-held data as JSON or CSV ZIP. A public privacy-request form is also available. Full account deletion requires verified email, recent authentication and explicit confirmation. The workflow removes user records, private storage and the Supabase Auth user, while only minimal anonymized records permitted for reviewed billing, fraud, security, privacy-audit or compliance purposes may remain.</p>
+        <p>See <Link href="/data-deletion">Data Deletion</Link> for the implemented flow.</p>
+      </LegalSection>
+      <LegalSection title="8. Cookies and browser storage">
+        <p>Necessary Supabase session cookies support authentication and security. Browser localStorage stores the cookie preference and, only with permission, the selected language. Analytics and marketing storage are not enabled by default. See <Link href="/cookies">Cookie Policy</Link>.</p>
+      </LegalSection>
+      <LegalSection title="9. Retention and international transfers">
+        <p>Active-data retention: {LEGAL_CONFIG.DATA_RETENTION_PERIOD}. Backup retention: {LEGAL_CONFIG.BACKUP_RETENTION_PERIOD}. International transfer mechanism: {LEGAL_CONFIG.INTERNATIONAL_TRANSFER_MECHANISM}. These values are intentionally not inferred from provider regions and require owner/legal review.</p>
+      </LegalSection>
+      <LegalSection title="10. Rights and requests">
+        <p>Subject to applicable law, users may request access, correction, export, restriction, objection or deletion. Requests can be submitted through the <Link href="/data-deletion/request">privacy request form</Link> or the configured privacy contact.</p>
+      </LegalSection>
+    </LegalPage>
+  );
 }

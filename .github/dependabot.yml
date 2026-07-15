@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    versioning-strategy: increase-if-necessary
+    groups:
+      testing-and-quality:
+        patterns:
+          - "@playwright/*"
+          - "@testing-library/*"
+          - "@vitejs/*"
+          - "eslint*"
+          - "prettier"
+          - "vite"
+          - "vitest"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3

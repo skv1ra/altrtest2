@@ -1,15 +1,16 @@
 "use client";
 
-import { motion, type MotionProps } from "framer-motion";
+import { motion, type MotionProps, useReducedMotion } from "framer-motion";
 import { ReactNode } from "react";
 
 export function Reveal({ children, delay = 0, className = "" }: { children: ReactNode; delay?: number; className?: string }) {
+  const reducedMotion = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28, filter: "blur(14px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={reducedMotion ? false : { opacity: 0, y: 28, filter: "blur(14px)" }}
+      whileInView={reducedMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay }}
+      transition={{ duration: reducedMotion ? 0 : 0.8, ease: [0.16, 1, 0.3, 1], delay: reducedMotion ? 0 : delay }}
       className={className}
     >
       {children}
@@ -17,8 +18,4 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
   );
 }
 
-export const softSpring: MotionProps["transition"] = {
-  type: "spring",
-  stiffness: 90,
-  damping: 18,
-};
+export const softSpring: MotionProps["transition"] = { type: "spring", stiffness: 90, damping: 18 };
