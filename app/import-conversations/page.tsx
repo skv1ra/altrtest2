@@ -1,9 +1,155 @@
 "use client";
-import { ArrowLeft, UploadCloud } from "lucide-react";
+
+import { ArrowLeft, Ban, RefreshCw, UploadCloud } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AiMark } from "@/components/Navigation";
-type ParsedConversation={externalId?:string;title?:string;participantSummary:string[];startedAt?:string;lastMessageAt?:string;messages:Array<{externalId?:string;senderType:"user"|"contact"|"assistant"|"system";senderLabel?:string;content:string;sentAt:string;metadata?:Record<string,unknown>}>};
-type Parsed={conversations:ParsedConversation[],preview:Array<{text:string}>,parserVersion:string};
-const mime:Record<string,string>={json:"application/json",txt:"text/plain",html:"text/html",htm:"text/html",csv:"text/csv",zip:"application/zip",mbox:"application/mbox"};
-export default function ImportPage(){const [platform,setPlatform]=useState("telegram");const [status,setStatus]=useState("");const [consent,setConsent]=useState(false);const run=async(file:File)=>{if(!consent)return setStatus("Confirm that normalized data may be stored.");setStatus("Parsing locally in your browser…");const worker=new Worker(new URL("../../workers/conversation-parser.worker.ts",import.meta.url));const parsed=await new Promise<Parsed>((resolve,reject)=>{worker.onmessage=e=>{worker.terminate();e.data.ok?resolve(e.data):reject(new Error(e.data.error))};worker.onerror=()=>reject(new Error("WORKER_FAILED"));worker.postMessage({file});});const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",await file.arrayBuffer()))).map(b=>b.toString(16).padStart(2,"0")).join("");const extension=file.name.split(".").pop()?.toLowerCase()??"";const create=await fetch("/api/imports",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform,sourceName:file.name,sourceHash:hash,bytes:file.size,mimeType:mime[extension]??file.type,extension,parserVersion:parsed.parserVersion,preview:parsed.preview,rawFileStored:false})});const created=await create.json();if(!create.ok)throw new Error(created.error);const chunks:ParsedConversation[][]=[];for(let i=0;i<parsed.conversations.length;i+=10)chunks.push(parsed.conversations.slice(i,i+10));for(let i=0;i<chunks.length;i++){const response=await fetch(`/api/imports/${created.import.id}/chunks`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chunkIndex:i,final:i===chunks.length-1,conversations:chunks[i]})});if(!response.ok)throw new Error((await response.json()).error);setStatus(`Uploading normalized chunk ${i+1}/${chunks.length}…`);}setStatus("Import complete. Raw source file was not uploaded.");};return <main className="min-h-screen bg-[#05080c] px-5 py-10 text-white"><header className="mx-auto flex max-w-4xl justify-between"><Link href="/dashboard" className="flex gap-2"><ArrowLeft className="h-4 w-4"/>Dashboard</Link><span className="flex gap-2">Altr <AiMark/></span></header><section className="pricing-card mx-auto mt-16 max-w-3xl rounded-[2rem] p-8"><p className="eyebrow">LOCAL PARSER / PRIVATE BY DEFAULT</p><h1 className="mt-4 text-4xl">Import normalized conversations.</h1><p className="mt-4 leading-7 text-white/45">The raw export stays in your browser. A Web Worker parses large files, then only validated normalized conversations and messages are uploaded in authenticated chunks.</p><select value={platform} onChange={e=>setPlatform(e.target.value)} className="mt-7 w-full rounded-xl bg-white/5 p-3">{["telegram","gmail","whatsapp","instagram","messenger","slack","discord","manual"].map(p=><option key={p}>{p}</option>)}</select><label className="mt-5 flex gap-3 text-sm text-white/55"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/>I authorize storage of normalized results. The raw file will not be uploaded.</label><label className="future-button mt-6 flex cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-4"><UploadCloud className="h-4 w-4"/>Choose export<input type="file" accept=".json,.txt,.html,.htm,.csv,.zip,.mbox" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void run(file).catch(err=>setStatus(err.message))}}/></label>{status&&<p className="mt-5 text-sm text-cyan-100/60">{status}</p>}</section></main>}
+import { IMPORT_LIMITS } from "@/lib/imports/limits";
+import type { ImportPlatform, ParseResult } from "@/lib/imports/types";
+
+const mime: Record<string, string> = {
+  json: "application/json",
+  txt: "text/plain",
+  html: "text/html",
+  htm: "text/html",
+  csv: "text/csv",
+  zip: "application/zip",
+  mbox: "application/mbox",
+};
+
+type ActiveWorker = {
+  worker: Worker;
+  requestId: string;
+  reject: (error: Error) => void;
+  timeoutId: number;
+};
+
+export default function ImportPage() {
+  const [platform, setPlatform] = useState<ImportPlatform>("telegram");
+  const [status, setStatus] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [lastFile, setLastFile] = useState<File | null>(null);
+  const activeWorker = useRef<ActiveWorker | null>(null);
+
+  const stopWorker = (reason: "IMPORT_CANCELLED" | "PROCESSING_TIMEOUT") => {
+    const active = activeWorker.current;
+    if (!active) return;
+    window.clearTimeout(active.timeoutId);
+    active.worker.terminate();
+    activeWorker.current = null;
+    active.reject(new Error(reason));
+  };
+
+  const cancel = () => stopWorker("IMPORT_CANCELLED");
+
+  const run = async (file: File) => {
+    if (!consent) return setStatus("Confirm that normalized data may be stored.");
+    if (file.size > IMPORT_LIMITS.compressedFileBytes) return setStatus("File is larger than the 25 MB import limit.");
+    setLastFile(file);
+    setBusy(true);
+    setStatus("Parsing locally in your browser…");
+    const worker = new Worker(new URL("../../workers/conversation-parser.worker.ts", import.meta.url));
+    const requestId = crypto.randomUUID();
+    let createdImportId: string | null = null;
+
+    try {
+      const parsed = await new Promise<ParseResult>((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => stopWorker("PROCESSING_TIMEOUT"), IMPORT_LIMITS.processingTimeoutMs);
+        activeWorker.current = { worker, requestId, reject, timeoutId };
+        worker.onmessage = (event) => {
+          if (event.data?.requestId !== requestId) return;
+          window.clearTimeout(timeoutId);
+          activeWorker.current = null;
+          event.data.ok ? resolve(event.data) : reject(new Error(event.data.error));
+        };
+        worker.onerror = () => {
+          window.clearTimeout(timeoutId);
+          activeWorker.current = null;
+          reject(new Error("WORKER_FAILED"));
+        };
+        worker.postMessage({ type: "parse", requestId, file, platform });
+      });
+
+      const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+      const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+      const create = await fetch("/api/imports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform,
+          sourceName: file.name,
+          sourceHash: hash,
+          bytes: file.size,
+          mimeType: mime[extension] ?? file.type,
+          extension,
+          parserVersion: parsed.parserVersion,
+          preview: parsed.preview,
+          rawFileStored: false,
+        }),
+      });
+      const created = await create.json();
+      if (!create.ok) {
+        if (created.error === "DUPLICATE_IMPORT") throw new Error(`DUPLICATE_IMPORT:${created.import?.status ?? "existing"}`);
+        throw new Error(created.error);
+      }
+      createdImportId = created.import.id;
+
+      const chunks = [];
+      for (let index = 0; index < parsed.conversations.length; index += 10) {
+        chunks.push(parsed.conversations.slice(index, index + 10));
+      }
+      for (let index = 0; index < chunks.length; index += 1) {
+        const response = await fetch(`/api/imports/${created.import.id}/chunks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chunkIndex: index, final: index === chunks.length - 1, conversations: chunks[index] }),
+        });
+        if (!response.ok) throw new Error((await response.json()).error);
+        setStatus(`Uploading normalized chunk ${index + 1}/${chunks.length}…`);
+      }
+      setStatus(`Import complete (${parsed.detectedFormat}). Raw source file was not uploaded.`);
+    } catch (error) {
+      if (createdImportId) await fetch(`/api/imports/${createdImportId}`, { method: "DELETE" }).catch(() => undefined);
+      const message = error instanceof Error ? error.message : "IMPORT_FAILED";
+      if (message === "IMPORT_CANCELLED") setStatus("Import cancelled. No raw file was uploaded. You can retry safely.");
+      else if (message === "PROCESSING_TIMEOUT") setStatus("Import stopped after 30 seconds. Try a smaller export or split the archive.");
+      else if (message.startsWith("DUPLICATE_IMPORT")) setStatus("This exact file was already imported. Delete or review the existing import before retrying.");
+      else setStatus(`Import failed: ${message}. You can safely retry with the same local file.`);
+    } finally {
+      if (activeWorker.current?.worker === worker) {
+        window.clearTimeout(activeWorker.current.timeoutId);
+        activeWorker.current = null;
+      }
+      worker.terminate();
+      setBusy(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-[#05080c] px-5 py-10 text-white">
+      <header className="mx-auto flex max-w-4xl justify-between">
+        <Link href="/dashboard" className="flex gap-2"><ArrowLeft className="h-4 w-4" />Dashboard</Link>
+        <span className="flex gap-2">Altr <AiMark /></span>
+      </header>
+      <section className="pricing-card mx-auto mt-16 max-w-3xl rounded-[2rem] p-8">
+        <p className="eyebrow">LOCAL PARSER / PRIVATE BY DEFAULT</p>
+        <h1 className="mt-4 text-4xl">Import normalized conversations.</h1>
+        <p className="mt-4 leading-7 text-white/45">The raw export stays in your browser. A hardened Web Worker validates archive sizes, strips HTML, treats all imported content as plain text, then uploads only authorized normalized data.</p>
+        <select value={platform} onChange={(event) => setPlatform(event.target.value as ImportPlatform)} disabled={busy} className="mt-7 w-full rounded-xl bg-white/5 p-3">
+          {["telegram", "gmail", "whatsapp", "instagram", "messenger", "slack", "discord", "manual"].map((item) => <option key={item}>{item}</option>)}
+        </select>
+        <label className="mt-5 flex gap-3 text-sm text-white/55"><input type="checkbox" checked={consent} disabled={busy} onChange={(event) => setConsent(event.target.checked)} />I authorize storage of normalized results. The raw file will not be uploaded.</label>
+        <label className={`future-button mt-6 flex items-center justify-center gap-2 rounded-full px-6 py-4 ${busy ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+          <UploadCloud className="h-4 w-4" />Choose export
+          <input type="file" disabled={busy} accept=".json,.txt,.html,.htm,.csv,.zip,.mbox" className="hidden" onChange={(event) => { const selected = event.target.files?.[0]; if (selected) void run(selected); }} />
+        </label>
+        {busy && <button type="button" onClick={cancel} className="mt-4 flex items-center gap-2 text-sm text-red-200/70"><Ban className="h-4 w-4" />Cancel local parsing</button>}
+        {!busy && lastFile && (status.startsWith("Import failed") || status.includes("retry")) && <button type="button" onClick={() => void run(lastFile)} className="mt-4 flex items-center gap-2 text-sm text-cyan-100/70"><RefreshCw className="h-4 w-4" />Retry safely</button>}
+        {status && <p className="mt-5 text-sm text-cyan-100/60">{status}</p>}
+      </section>
+    </main>
+  );
+}
