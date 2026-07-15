@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { ensureApplicationState } from "@/lib/application-state";
+import { requireUser, createSupabaseAdminClient } from "@/lib/supabase/server";
+export async function GET() { try { const user = await requireUser(); await ensureApplicationState(user); const { data, error } = await createSupabaseAdminClient().from("altr_assistant_configs").select("id,name,assistant_type,system_instructions,tone,is_active,config,created_at,updated_at").eq("user_id", user.id).order("created_at"); if (error) throw error; return NextResponse.json({ assistants: data ?? [], previews: [{ id: "operator", name: "Operator", status: "coming_later" }, { id: "negotiator", name: "Negotiator", status: "coming_later" }] }); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "ASSISTANT_LIST_FAILED" }, { status: 500 }); } }
