@@ -48,11 +48,17 @@ jobs:
         run: npm install --global yarn@1.22.22
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-      - name: Run repository checks
-        run: yarn run check
+      - name: Lint
+        run: yarn lint
+      - name: Typecheck
+        run: yarn typecheck
+      - name: Unit and integration tests
+        run: yarn test
+      - name: Production build
+        run: yarn build
       - name: Install Playwright Chromium
         run: yarn playwright install --with-deps chromium
-      - name: Run critical browser flows
+      - name: Critical browser flows
         run: yarn test:e2e
       - name: Upload Playwright report
         if: always()
