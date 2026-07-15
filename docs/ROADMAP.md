@@ -1,34 +1,45 @@
-# Engineering roadmap
+# Product roadmap
 
-## Phase 0 — repository foundation
+## Current production foundation
 
-- standardize on Yarn 1.22.22 and commit `yarn.lock`;
-- enforce frozen installs in Vercel and CI;
-- declare Node.js 24.x support;
-- establish lint, typecheck, Vitest, React Testing Library, Playwright, and Prettier commands;
-- add credential-free CI and Dependabot;
-- document architecture, deployment, environment, security, and the pre-fix baseline;
-- expose non-sensitive deployment metadata at `/api/version`.
+The current codebase provides Supabase authentication and server-authoritative data, conversation import parsers, editable memory, the Altr Twin draft MVP, Lemon Squeezy billing, export/deletion, security hardening, legal/consent surfaces, accessibility improvements and automated testing.
 
-## Phase 1 — application correctness
+Account configuration, final legal review and manual production validation are still required. The phases below are future work and are **not complete**.
 
-- remove or isolate obsolete LiqPay and browser-prototype helpers still present outside active routes;
-- consolidate billing status and receipt reads onto the current authenticated Supabase schema;
-- improve loading and error state machines for authentication and pricing;
-- add route-handler integration tests with mocked Supabase and provider clients;
-- make profile, consent, and subscription write failures observable and actionable.
+## Phase A — Gmail OAuth and incremental sync
 
-## Phase 2 — production hardening
+- Add dedicated Gmail OAuth scopes and consent.
+- Store and rotate provider tokens securely.
+- Implement incremental sync, revocation, deletion and audit behavior.
+- Keep Google sign-in separate from Gmail mailbox access.
 
-- keep Next.js and related dependencies on supported patched releases through dedicated reviewed changes;
-- add structured logging and error monitoring with personal-data redaction;
-- add rate limiting and abuse controls to auth, imports, AI drafts, billing, and email routes;
-- test webhook replay/idempotency and subscription lifecycle transitions;
-- add database migration verification and Supabase type generation to CI.
+## Phase B — Telegram/WhatsApp/Meta import improvements
 
-## Phase 3 — product capabilities
+- Improve export guidance, format coverage, deduplication and large-import UX.
+- Add provider-specific normalization and provenance.
+- Do not claim direct live API sync until approved APIs and permissions exist.
 
-- expand transparent memory controls and import processing;
-- introduce durable job orchestration for long-running imports;
-- add customer subscription management and cancellation flows;
-- define explicit approval boundaries before any message-sending capability.
+## Phase C — Google Calendar
+
+- Add Calendar OAuth, scoped read/write permissions and token lifecycle.
+- Build availability/context features with explicit user control.
+- Require confirmation before any calendar mutation.
+
+## Phase D — Operator task extraction and approval workflow
+
+- Extract proposed tasks from approved data.
+- Show evidence, confidence, owner and due-date suggestions.
+- Require explicit approval before creating or executing any task.
+
+## Phase E — Negotiator rules and controlled proposal generation
+
+- Define user-controlled negotiation constraints and prohibited actions.
+- Generate proposals as reviewable drafts with provenance.
+- Prevent autonomous commitments, payments, contracts or message sending.
+
+## Phase F — team workspace, roles, shared memory and audit logs
+
+- Add organizations, invitations, roles and least-privilege permissions.
+- Separate personal and shared memory.
+- Add tenant isolation, administrative controls and complete audit history.
+- Perform a new security, privacy and legal review before release.
