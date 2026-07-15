@@ -2,12 +2,13 @@ import type { User } from "@supabase/supabase-js";
 
 export const E2E_USER_HEADER = "x-altr-e2e-user";
 export const E2E_EMAIL_HEADER = "x-altr-e2e-email";
+type HeaderReader = Pick<Headers, "get">;
 
 export function e2eMocksEnabled() {
   return process.env.ALTR_E2E_MOCKS === "1" && process.env.VERCEL !== "1";
 }
 
-export function getE2EIdentity(headers: Headers) {
+export function getE2EIdentity(headers: HeaderReader) {
   if (!e2eMocksEnabled()) return null;
   const id = headers.get(E2E_USER_HEADER);
   if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return null;
@@ -15,7 +16,7 @@ export function getE2EIdentity(headers: Headers) {
   return { id, email };
 }
 
-export function e2eUserFromHeaders(headers: Headers): User | null {
+export function e2eUserFromHeaders(headers: HeaderReader): User | null {
   const identity = getE2EIdentity(headers);
   if (!identity) return null;
   const now = new Date().toISOString();
