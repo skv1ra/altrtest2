@@ -10,4 +10,18 @@ export function isOpenAIConfigured() {
   return Boolean(process.env.OPENAI_API_KEY?.trim());
 }
 
-export
+export function requireOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!apiKey) {
+    const error = new Error("AI_PROVIDER_NOT_CONFIGURED");
+    Object.assign(error, { status: 503 });
+    throw error;
+  }
+  return new OpenAI({ apiKey });
+}
+
+export function assertEmbeddingConfiguration() {
+  if (OPENAI_EMBEDDING_MODEL !== "text-embedding-3-small") {
+    throw new Error("EMBEDDING_MODEL_REQUIRES_DOCUMENTED_MIGRATION");
+  }
+}
