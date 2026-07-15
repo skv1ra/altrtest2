@@ -1,0 +1,40 @@
+name: Phase 8 Verify
+
+on:
+  pull_request:
+    branches: [agent/phase-7-real-altr-twin-ai-mvp-v2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: true
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key-placeholder-at-least-twenty-characters
+      SUPABASE_SERVICE_ROLE_KEY: ci-service-role-placeholder-at-least-twenty-characters
+      LEMONSQUEEZY_API_KEY: ci-lemon-api-placeholder-at-least-twenty-characters
+      LEMONSQUEEZY_STORE_ID: "42"
+      LEMONSQUEEZY_WEBHOOK_SECRET: ci-webhook-placeholder-at-least-twenty-characters
+      LEMONSQUEEZY_PERSONAL_VARIANT_ID: "1001"
+      LEMONSQUEEZY_WORK_VARIANT_ID: "1002"
+      OPENAI_API_KEY: ci-openai-key-placeholder-at-least-twenty-characters
+      OPENAI_RESPONSE_MODEL: gpt-5.6
+      OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+      - run: npm install --global yarn@1.22.22
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn test
+      - run: yarn build
