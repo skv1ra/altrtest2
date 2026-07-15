@@ -9,7 +9,9 @@ function createNonce() {
 
 function buildContentSecurityPolicy(nonce: string) {
   const isProduction = process.env.NODE_ENV === "production";
-  const scriptSrc = ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...(!isProduction ? ["'unsafe-eval'"] : [])];
+  // Keep self-hosted Next.js chunks executable on statically rendered pages.
+  // `strict-dynamic` would make browsers ignore `self` when those chunks do not carry a runtime nonce.
+  const scriptSrc = ["'self'", `'nonce-${nonce}'`, ...(!isProduction ? ["'unsafe-eval'"] : [])];
   const connectSrc = [
     "'self'",
     "https://*.supabase.co",
