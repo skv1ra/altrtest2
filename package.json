@@ -2,9 +2,7 @@
   "name": "altr-landing",
   "version": "1.0.0",
   "private": true,
-  "engines": {
-    "node": "24.x"
-  },
+  "engines": { "node": "24.x" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,6 +13,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "verify:ai-env": "node scripts/verify-ai-env.mjs",
+    "verify:production": "node scripts/verify-production.mjs",
     "format": "prettier --write --ignore-unknown .",
     "format:check": "prettier --check --ignore-unknown .",
     "check": "yarn lint && yarn typecheck && yarn test && yarn build"
