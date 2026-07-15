@@ -1,0 +1,22 @@
+name: Phase 5 Export
+
+on:
+  push:
+    branches: [agent/phase-5-server-authoritative-state]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive repository
+        run: tar --exclude=.git -czf phase5-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase5-source
+          path: phase5-source.tar.gz
+          retention-days: 1
