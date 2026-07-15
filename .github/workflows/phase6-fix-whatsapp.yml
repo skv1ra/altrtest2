@@ -1,0 +1,35 @@
+name: Phase 6 Fix WhatsApp
+
+on:
+  push:
+    branches: [agent/phase-6-harden-import-parsers]
+    paths: [.github/workflows/phase6-fix-whatsapp.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-6-harden-import-parsers
+      - name: Support bracketed WhatsApp exports
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('lib/imports/parsers.ts')
+          text = path.read_text()
+          old = r'\]?\s*[-–]\s*([^:]+):\s*(.*)$/i;'
+          new = r'\]?\s*(?:[-–]\s*)?([^:]+):\s*(.*)$/i;'
+          if old not in text:
+              raise SystemExit('target regex not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/imports/parsers.ts
+          git commit -m "fix(imports): support bracketed WhatsApp exports"
+          git push origin HEAD:agent/phase-6-harden-import-parsers
