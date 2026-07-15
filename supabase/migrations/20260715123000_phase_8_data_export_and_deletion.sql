@@ -1,6 +1,4 @@
-alter table public.altr_deletion_requests
-  alter column user_id drop not null;
-
+alter table public.altr_deletion_requests alter column user_id drop not null;
 alter table public.altr_deletion_requests
   add column if not exists email text,
   add column if not exists email_verified boolean not null default false,
@@ -56,56 +54,6 @@ alter table public.altr_subscriptions add column if not exists deleted_subject_h
 alter table public.altr_invoices add column if not exists deleted_subject_hash text, alter column user_id drop not null;
 alter table public.altr_billing_orders add column if not exists deleted_subject_hash text, alter column user_id drop not null;
 alter table public.altr_billing_invoices add column if not exists deleted_subject_hash text, alter column user_id drop not null;
-
-create or replace function public.altr_prepare_account_deletion(p_user_id uuid, p_request_id uuid, p_subject_hash text)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if p_subject_hash is null or length(p_subject_hash) < 32 then raise exception 'INVALID_SUBJECT_HASH'; end if;
-  if not exists (select 1 from public.altr_deletion_requests where id = p_request_id and user_id = p_user_id) then raise exception 'INVALID_DELETION_REQUEST'; end if;
-
-  update public.altr_subscriptions set user_id = null, deleted_subject_hash = p_subject_hash,
-    lemon_squeezy_customer_id = null, provider_customer_id = null where user_id = p_user_id;
-  update public.altr_invoices set user_id = null, deleted_subject_hash = p_subject_hash, raw_payload = '{}'::jsonb where user_id = p_user_id;
-  update public.altr_billing_orders set user_id = null, deleted_subject_hash = p_subject_hash,
-    provider_customer_id = null, raw_payload = '{}'::jsonb where user_id = p_user_id;
-  update public.altr_billing_invoices set user_id = null, deleted_subject_hash = p_subject_hash, raw_payload = '{}'::jsonb where user_id = p_user_id;
-
-  delete from public.altr_draft_feedback where user_id = p_user_id;
-  delete from public.altr_memory_sources where user_id = p_user_id;
-  delete from public.altr_assistant_runs where user_id = p_user_id;
-  delete from public.altr_draft_replies where user_id = p_user_id;
-  delete from public.altr_messages where user_id = p_user_id;
-  delete from public.altr_memories where user_id = p_user_id;
-  delete from public.altr_conversations where user_id = p_user_id;
-  delete from public.altr_assistant_configs where user_id = p_user_id;
-  delete from public.altr_conversation_imports where user_id = p_user_id;
-  delete from public.altr_data_connections where user_id = p_user_id;
-  delete from public.altr_consent_history where user_id = p_user_id;
-  delete from public.altr_consent_events where user_id = p_user_id;
-  delete from public.altr_consents where user_id = p_user_id;
-  delete from public.altr_user_preferences where user_id = p_user_id;
-  delete from public.altr_usage_counters where user_id = p_user_id;
-  delete from public.altr_profiles where user_id = p_user_id;
-  delete from public.altr_audit_logs where user_id = p_user_id;
-  delete from public.altr_audit_events where user_id = p_user_id;
-  delete from public.altr_deletion_requests where user_id = p_user_id and id <> p_request_id;
-
-  update public.altr_deletion_requests set user_id = null, email = null, email_verified = false,
-    verification_state = 'not_required', subject_hash = p_subject_hash, status = 'completed',
-    processed_at = now(), completed_at = now(), anonymized_at = now(), updated_at = now(),
-    metadata = jsonb_build_object('retained', true, 'retention_reason', 'privacy request audit and compliance evidence; duration is determined by reviewed legal requirements')
-  where id = p_request_id;
-  update public.altr_deletion_request_history set actor_user_id = null where request_id = p_request_id;
-  insert into public.altr_deletion_request_history(request_id, actor_type, from_status, to_status, note, metadata)
-  values (p_request_id, 'service', 'processing', 'completed', 'User-generated data deleted; permitted billing/compliance metadata anonymized.', jsonb_build_object('subject_hash', p_subject_hash));
-end;
-$$;
-revoke all on function public.altr_prepare_account_deletion(uuid, uuid, text) from public, anon, authenticated;
-grant execute on function public.altr_prepare_account_deletion(uuid, uuid, text) to service_role;
 
 comment on column public.altr_deletion_requests.email_verified is 'True only when derived from an authenticated verified identity or a completed verification process.';
 comment on column public.altr_deletion_requests.subject_hash is 'Irreversible hash used to correlate retained compliance records without retaining the Auth user.';
