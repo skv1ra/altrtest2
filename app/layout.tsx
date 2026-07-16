@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Instrument_Serif } from "next/font/google";
+import { Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import "./accessibility.css";
 import { CookieBanner } from "@/components/CookieBanner";
 import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 
-const geist = Geist({
+const geist = Inter({
   subsets: ["latin", "cyrillic"],
   variable: "--font-geist",
   display: "swap",
