@@ -10,9 +10,9 @@ export function MacBook({ children, lid }: MacBookProps) {
   return (
     <div className="relative mx-auto w-full max-w-[1120px] [perspective:2200px]">
       <motion.div
-        initial={lid === "opening" ? { rotateX: -88, y: 88 } : false}
-        animate={{ rotateX: closing ? -88 : -3.5, y: closing ? 88 : 0 }}
-        transition={{ duration: closing ? 1.05 : 1.25, ease: [0.16, 1, 0.3, 1] }}
+        initial={lid === "opening" ? { rotateX: -88 } : false}
+        animate={{ rotateX: closing ? -87.5 : -3.5 }}
+        transition={{ duration: closing ? 0.95 : 1.25, ease: closing ? [0.55, 0.06, 0.68, 0.19] : [0.16, 1, 0.3, 1] }}
         style={{ transformOrigin: "50% 100%", transformStyle: "preserve-3d" }}
         className="relative z-20 mx-auto aspect-[16/10] w-[78%] rounded-t-[24px] bg-[linear-gradient(145deg,#777c82_0%,#272b30_8%,#090a0c_22%,#050607_82%,#454a50_100%)] p-[7px] shadow-[0_45px_120px_rgba(0,0,0,.78),0_0_70px_rgba(85,178,255,.08)]"
       >
@@ -20,7 +20,19 @@ export function MacBook({ children, lid }: MacBookProps) {
           <div className="absolute left-1/2 top-0 z-30 h-[18px] w-[108px] -translate-x-1/2 rounded-b-[12px] bg-[#050607]">
             <i className="absolute left-1/2 top-[5px] h-[5px] w-[5px] -translate-x-1/2 rounded-full bg-[#14202a] shadow-[0_0_5px_rgba(74,156,220,.45)]" />
           </div>
-          <div className="h-full bg-[#06090d]">{children}</div>
+          <motion.div
+            animate={{ opacity: closing ? 0 : 1, filter: closing ? "brightness(0.05)" : "brightness(1)" }}
+            transition={{ duration: closing ? 0.22 : 0.35, ease: "easeOut" }}
+            className="h-full bg-[#06090d]"
+          >
+            {children}
+          </motion.div>
+          <motion.div
+            aria-hidden="true"
+            animate={{ opacity: closing ? 0.72 : 0 }}
+            transition={{ duration: closing ? 0.2 : 0.25 }}
+            className="pointer-events-none absolute inset-0 bg-black"
+          />
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(118deg,rgba(255,255,255,.075),transparent_18%,transparent_72%,rgba(255,255,255,.025))]" />
         </div>
       </motion.div>
