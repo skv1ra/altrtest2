@@ -1,0 +1,293 @@
+/* Home page CTA + footer. Scoped to #top so internal pages keep the dark Altr shell. */
+
+main#top > section:last-of-type {
+  max-width: none !important;
+  padding: 0 16px !important;
+  margin-top: 56px;
+}
+
+main#top > section:last-of-type > div {
+  position: relative;
+  isolation: isolate;
+  min-height: 470px;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 34px 34px 0 0 !important;
+  background:
+    radial-gradient(circle at 82% 20%, rgba(121, 161, 226, .23), transparent 26%),
+    radial-gradient(circle at 66% 54%, rgba(87, 145, 236, .18), transparent 24%),
+    linear-gradient(180deg, #edf2fc 0%, #e6edf9 100%) !important;
+  padding: 76px 70px 94px !important;
+  color: #0b1320;
+  text-align: left !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+main#top > section:last-of-type > div::before,
+main#top > section:last-of-type > div::after {
+  position: absolute;
+  z-index: -1;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border: 1px solid rgba(127, 153, 192, .18);
+  border-radius: 25px;
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(217,228,245,.9));
+  color: rgba(83, 103, 132, .46);
+  font-size: 48px;
+  font-weight: 400;
+  box-shadow:
+    0 30px 55px rgba(77, 112, 164, .25),
+    0 0 42px rgba(94, 149, 235, .22),
+    inset 0 1px 1px rgba(255,255,255,.98),
+    inset 0 -8px 18px rgba(116, 145, 188, .12);
+  filter: drop-shadow(0 0 22px rgba(73, 137, 232, .18));
+}
+
+main#top > section:last-of-type > div::before {
+  content: "↵";
+  top: 52px;
+  right: 11%;
+  transform: rotate(-11deg);
+}
+
+main#top > section:last-of-type > div::after {
+  content: "⌘";
+  top: 218px;
+  right: 28%;
+  transform: rotate(10deg);
+  color: rgba(80, 129, 203, .7);
+  box-shadow:
+    0 30px 60px rgba(66, 114, 184, .28),
+    0 0 52px rgba(73, 136, 233, .34),
+    inset 0 1px 1px rgba(255,255,255,.98),
+    inset 0 -8px 18px rgba(116, 145, 188, .12);
+}
+
+main#top > section:last-of-type > div > p:first-child:empty {
+  display: none;
+}
+
+main#top > section:last-of-type h2 {
+  max-width: 720px !important;
+  margin: 0 !important;
+  color: #0b111a !important;
+  font-size: clamp(38px, 5vw, 76px) !important;
+  line-height: .98 !important;
+  letter-spacing: -.055em !important;
+}
+
+main#top > section:last-of-type h2 + p {
+  max-width: 680px !important;
+  margin: 18px 0 0 !important;
+  color: #7185aa !important;
+  font-size: clamp(19px, 2vw, 31px) !important;
+  line-height: 1.18 !important;
+  letter-spacing: -.025em;
+}
+
+main#top > section:last-of-type a {
+  margin-top: 34px !important;
+  min-height: 56px !important;
+  border: 1px solid rgba(255,255,255,.2);
+  background: linear-gradient(180deg, #242b35, #11151b) !important;
+  color: #fff !important;
+  box-shadow: 0 16px 32px rgba(13, 22, 35, .3), inset 0 1px 0 rgba(255,255,255,.17);
+}
+
+main#top > footer {
+  position: relative;
+  max-width: none !important;
+  margin: 0 16px 16px;
+  grid-template-columns: minmax(260px, 1fr) minmax(520px, 1.25fr) !important;
+  gap: 58px 80px !important;
+  border-radius: 0 0 34px 34px;
+  background: #e6edf9;
+  padding: 46px 70px 28px !important;
+  color: #182233 !important;
+  box-shadow: inset 0 1px 0 rgba(110, 138, 177, .16);
+}
+
+main#top > footer > a:first-child {
+  position: relative;
+  align-self: start;
+  color: #0c1522 !important;
+  font-size: 25px !important;
+  font-weight: 700;
+  letter-spacing: -.04em;
+}
+
+main#top > footer > a:first-child::after {
+  content: "●  All systems operational";
+  position: absolute;
+  top: 185px;
+  left: 0;
+  width: max-content;
+  border: 1px solid rgba(98, 126, 166, .15);
+  border-radius: 10px;
+  background: rgba(255,255,255,.26);
+  padding: 11px 14px;
+  color: #334157;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+}
+
+main#top > footer > a:first-child::first-letter {
+  color: #28c47a;
+}
+
+main#top > footer nav {
+  display: grid !important;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(3, minmax(125px, 1fr));
+  grid-template-rows: repeat(4, auto);
+  align-content: start !important;
+  gap: 15px 54px !important;
+}
+
+main#top > footer nav a {
+  position: relative;
+  color: #233047 !important;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+main#top > footer nav a:hover {
+  color: #236edb !important;
+  text-shadow: none !important;
+}
+
+main#top > footer nav a:nth-child(1)::before,
+main#top > footer nav a:nth-child(4)::before,
+main#top > footer nav a:nth-child(6)::before {
+  display: block;
+  margin-bottom: 19px;
+  color: #101827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+main#top > footer nav a:nth-child(1)::before { content: "Resources"; }
+main#top > footer nav a:nth-child(4)::before { content: "Support"; }
+main#top > footer nav a:nth-child(6)::before { content: "Legal"; }
+
+main#top > footer > p {
+  grid-column: 1 / -1;
+  margin-top: 56px;
+  border-top: 1px solid rgba(93, 122, 164, .15);
+  padding-top: 22px;
+  color: #6d7d97 !important;
+  font-size: 13px;
+}
+
+main#top > footer::after {
+  content: "𝕏   ◉   ◎   ◇";
+  position: absolute;
+  right: 70px;
+  bottom: 27px;
+  color: #111a27;
+  font-size: 20px;
+  letter-spacing: .32em;
+}
+
+@media (max-width: 900px) {
+  main#top > section:last-of-type > div {
+    min-height: 530px;
+    padding: 58px 30px 250px !important;
+  }
+
+  main#top > section:last-of-type > div::before {
+    top: auto;
+    right: 11%;
+    bottom: 65px;
+  }
+
+  main#top > section:last-of-type > div::after {
+    top: auto;
+    right: 48%;
+    bottom: 120px;
+  }
+
+  main#top > footer {
+    grid-template-columns: 1fr !important;
+    padding: 40px 30px 28px !important;
+  }
+
+  main#top > footer > a:first-child::after {
+    position: static;
+    display: block;
+    margin-top: 28px;
+  }
+
+  main#top > footer nav {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: none;
+    gap: 14px 24px !important;
+  }
+
+  main#top > footer > p {
+    margin-top: 20px;
+    padding-right: 150px;
+  }
+
+  main#top > footer::after {
+    right: 30px;
+  }
+}
+
+@media (max-width: 620px) {
+  main#top > section:last-of-type,
+  main#top > footer {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  main#top > section:last-of-type {
+    padding: 0 !important;
+  }
+
+  main#top > section:last-of-type > div {
+    border-radius: 26px 26px 0 0 !important;
+    padding: 48px 24px 230px !important;
+  }
+
+  main#top > section:last-of-type > div::before,
+  main#top > section:last-of-type > div::after {
+    width: 88px;
+    height: 88px;
+    border-radius: 21px;
+    font-size: 38px;
+  }
+
+  main#top > footer {
+    border-radius: 0 0 26px 26px;
+    padding: 34px 24px 24px !important;
+  }
+
+  main#top > footer nav {
+    grid-template-columns: 1fr;
+    gap: 12px !important;
+  }
+
+  main#top > footer nav a:nth-child(1)::before,
+  main#top > footer nav a:nth-child(4)::before,
+  main#top > footer nav a:nth-child(6)::before {
+    margin-top: 18px;
+    margin-bottom: 7px;
+  }
+
+  main#top > footer > p {
+    padding-right: 0;
+    padding-bottom: 46px;
+  }
+
+  main#top > footer::after {
+    left: 24px;
+    right: auto;
+    bottom: 24px;
+  }
+}
