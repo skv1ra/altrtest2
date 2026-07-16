@@ -51,9 +51,9 @@ export function HeroSequence({ lang }: { lang: "EN" | "UA" }) {
         {device === "mac" ? (
           <motion.div
             key="macbook"
-            initial={stage === 0 ? { opacity: 0, scale: 0.96, y: 24, filter: "blur(8px)" } : { opacity: 0.1, y: "112%", scale: 0.97, filter: "blur(30px)" }}
+            initial={stage === 0 ? { opacity: 0, scale: 0.96, y: 24, filter: "blur(10px)" } : { opacity: 0.04, y: "112%", scale: 0.95, filter: "blur(58px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0.08, y: "-112%", scale: 0.97, filter: "blur(30px)" }}
+            exit={{ opacity: 0.03, y: "-112%", scale: 0.95, filter: "blur(58px)" }}
             transition={{ duration: stage === 0 ? 0.8 : 0.48, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-0 flex items-center justify-center px-2 md:px-7"
           >
@@ -74,9 +74,9 @@ export function HeroSequence({ lang }: { lang: "EN" | "UA" }) {
         ) : (
           <motion.div
             key="iphone"
-            initial={{ opacity: 0.08, y: "112%", scale: 0.96, filter: "blur(32px)" }}
+            initial={{ opacity: 0.03, y: "112%", scale: 0.94, filter: "blur(64px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0.08, y: "-112%", scale: 0.96, filter: "blur(32px)" }}
+            exit={{ opacity: 0.03, y: "-112%", scale: 0.94, filter: "blur(64px)" }}
             transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-0 flex items-center justify-center"
           >
@@ -85,7 +85,7 @@ export function HeroSequence({ lang }: { lang: "EN" | "UA" }) {
         )}
       </AnimatePresence>
 
-      <motion.div aria-hidden="true" animate={{ opacity: device === "iphone" ? [0, 0.24, 0] : 0 }} transition={{ duration: 0.48 }} className="pointer-events-none absolute inset-x-0 top-1/2 h-28 -translate-y-1/2 bg-white/10 blur-3xl" />
+      <motion.div aria-hidden="true" animate={{ opacity: device === "iphone" ? [0, 0.42, 0] : 0 }} transition={{ duration: 0.48 }} className="pointer-events-none absolute inset-x-0 top-1/2 h-36 -translate-y-1/2 bg-white/15 blur-[70px]" />
     </div>
   );
 }
