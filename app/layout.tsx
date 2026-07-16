@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./accessibility.css";
+import "./home-glow.css";
 import "./home-footer.css";
 import "./home-footer-structured.css";
 import { CookieBanner } from "@/components/CookieBanner";
