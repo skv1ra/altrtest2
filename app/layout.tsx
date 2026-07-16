@@ -4,6 +4,7 @@ import "./accessibility.css";
 import "./home-footer.css";
 import "./home-footer-structured.css";
 import { CookieBanner } from "@/components/CookieBanner";
+import { GlobalLanguageSwitch } from "@/components/GlobalLanguageSwitch";
 import { HomeFooterMount } from "@/components/HomeFooterMount";
 import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 
@@ -21,9 +22,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uk" suppressHydrationWarning className="bg-ink">
+    <html lang="en" suppressHydrationWarning className="bg-ink">
       <body className="noise antialiased">
         <LocaleHtmlSync />
+        <GlobalLanguageSwitch />
         {children}
         <HomeFooterMount />
         <CookieBanner />
