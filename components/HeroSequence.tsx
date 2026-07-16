@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { IPhone, MacBook } from "./hero/DeviceShells";
 import { MessengerScene } from "./hero/MessengerScene";
 
-const durations = [1700, 2700, 3100, 2600, 1500, 1800];
+const durations = [1700, 2700, 3100, 3600, 1500, 1800];
 
 function MacDesktop() {
   return (
