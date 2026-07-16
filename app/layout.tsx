@@ -1,24 +1,38 @@
 import type { Metadata } from "next";
+import { Geist, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import "./accessibility.css";
 import { CookieBanner } from "@/components/CookieBanner";
 import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 
+const geist = Geist({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-geist",
+  display: "swap",
+});
+
+const editorial = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-editorial",
+  display: "swap",
+});
+
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Altr - Become impossible to replace",
-  description: "Altr learns how you think, decide and communicate until it becomes your digital self.",
+  title: "Altr — Your controlled second presence",
+  description: "Altr learns how you communicate, remembers what matters and becomes your controlled second presence online.",
   openGraph: {
-    title: "Altr - AI digital self",
-    description: "An AI twin that learns your writing, voice, memory, routines and decisions.",
+    title: "Altr — Second Presence",
+    description: "A second digital presence that remembers, prepares and acts within boundaries you define.",
     type: "website",
   },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uk" suppressHydrationWarning className="bg-ink">
+    <html lang="uk" suppressHydrationWarning className={`${geist.variable} ${editorial.variable} bg-ink`}>
       <body className="noise antialiased">
         <LocaleHtmlSync />
         {children}
