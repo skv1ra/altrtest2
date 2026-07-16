@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./accessibility.css";
 import "./home-footer.css";
+import "./home-footer-structured.css";
 import { CookieBanner } from "@/components/CookieBanner";
+import { HomeFooterMount } from "@/components/HomeFooterMount";
 import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="noise antialiased">
         <LocaleHtmlSync />
         {children}
+        <HomeFooterMount />
         <CookieBanner />
       </body>
     </html>
