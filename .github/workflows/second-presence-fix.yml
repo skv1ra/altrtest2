@@ -1,0 +1,32 @@
+name: Second Presence one-time fix
+
+on:
+  push:
+    branches:
+      - agent/second-presence-redesign
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/second-presence-redesign
+          fetch-depth: 0
+      - name: Fix CSS module and supported font
+        run: |
+          sed -i '1{/^:root{}$/d;}' components/SecondPresenceLanding.module.css
+          sed -i 's/import { Geist, Instrument_Serif } from "next\/font\/google";/import { Inter, Instrument_Serif } from "next\/font\/google";/' app/layout.tsx
+          sed -i 's/const geist = Geist(/const geist = Inter(/' app/layout.tsx
+          rm .github/workflows/second-presence-fix.yml
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/layout.tsx components/SecondPresenceLanding.module.css .github/workflows/second-presence-fix.yml
+          git commit -m "fix(design): make second presence build compatible"
+          git push origin HEAD:agent/second-presence-redesign
