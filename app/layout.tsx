@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./accessibility.css";
 import { CookieBanner } from "@/components/CookieBanner";
+import { GlobalLanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +19,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uk" suppressHydrationWarning className="bg-ink">
+    <html lang="en" suppressHydrationWarning className="bg-ink">
       <body className="noise antialiased">
         <LocaleHtmlSync />
         {children}
+        <GlobalLanguageSwitcher />
         <CookieBanner />
       </body>
     </html>
