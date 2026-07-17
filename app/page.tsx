@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, LockKeyhole, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
+import styles from "./HomeHero.module.css";
 import { AltrShardScene } from "@/components/AltrShardScene";
 import { AltrLogo, Navigation } from "@/components/Navigation";
 import { ReferenceHeroScene } from "@/components/ReferenceHeroScene";
@@ -74,16 +75,16 @@ export default function HomePage() {
     <main id="top" className="landing-page">
       <Navigation lang={lang} setLang={setLang} />
 
-      <section className="landing-hero landing-hero-reference">
+      <section className={`landing-hero ${styles.hero}`}>
         <ReferenceHeroScene />
-        <div className="landing-hero-copy landing-hero-copy-reference">
+        <div className={`landing-hero-copy ${styles.copy}`}>
           <motion.h1 initial={reducedMotion ? false : { opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
             <span>{t.heroA}</span>
             <span>{t.heroB}</span>
           </motion.h1>
           <motion.p className="landing-hero-subtitle" initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>{t.subtitle}</motion.p>
-          <motion.div className="landing-cta-wrap landing-cta-reference" initial={reducedMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <Link href="/auth?mode=register" className="primary-button hero-reference-button">{t.cta}</Link>
+          <motion.div className={`landing-cta-wrap ${styles.cta}`} initial={reducedMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Link href="/auth?mode=register" className={`primary-button ${styles.button}`}>{t.cta}</Link>
           </motion.div>
         </div>
         <a href="#product" className="landing-scroll-indicator" aria-label="Scroll to product"><span /></a>
