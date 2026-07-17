@@ -3,8 +3,16 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { requestPasswordReset } from "@/lib/auth";
+import { useLang } from "@/lib/i18n/lang-store";
+
+const copy = {
+  EN: { title: "Password recovery", body: "Enter your email. The response is the same whether or not an account exists.", wait: "Please wait…", send: "Send instructions", back: "Return to sign in", fallback: "Please try again later." },
+  UA: { title: "Відновлення пароля", body: "Введи email. Відповідь буде однаковою незалежно від того, чи існує акаунт.", wait: "Зачекай…", send: "Надіслати інструкції", back: "Повернутися до входу", fallback: "Спробуй ще раз пізніше." },
+} as const;
 
 export default function ForgotPasswordPage() {
+  const [lang] = useLang("EN");
+  const t = copy[lang];
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,7 +24,7 @@ export default function ForgotPasswordPage() {
       const result = await requestPasswordReset(email);
       setMessage(result.message);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Спробуй ще раз пізніше.");
+      setMessage(error instanceof Error ? error.message : t.fallback);
     } finally {
       setLoading(false);
     }
@@ -26,14 +34,14 @@ export default function ForgotPasswordPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#05080c] px-5 text-white">
       <section className="auth-card w-full max-w-md rounded-[2rem] p-8">
         <p className="eyebrow">ACCOUNT RECOVERY</p>
-        <h1 className="mt-4 text-3xl font-medium tracking-[-.04em]">Відновлення пароля</h1>
-        <p className="mt-3 text-sm leading-6 text-white/45">Введи email. Відповідь буде однаковою незалежно від того, чи існує акаунт.</p>
+        <h1 className="mt-4 text-3xl font-medium tracking-[-.04em]">{t.title}</h1>
+        <p className="mt-3 text-sm leading-6 text-white/45">{t.body}</p>
         <form onSubmit={submit} className="mt-7 space-y-4">
           <label className="auth-field"><span>Email</span><span className="auth-input-wrap"><input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" /></span></label>
           {message && <p role="status" className="rounded-xl border border-white/[.07] bg-white/[.03] px-4 py-3 text-sm text-white/65">{message}</p>}
-          <button disabled={loading} className="future-button flex w-full items-center justify-center rounded-full px-6 py-4 text-sm font-medium disabled:opacity-60">{loading ? "Зачекай…" : "Надіслати інструкції"}</button>
+          <button disabled={loading} className="future-button flex w-full items-center justify-center rounded-full px-6 py-4 text-sm font-medium disabled:opacity-60">{loading ? t.wait : t.send}</button>
         </form>
-        <Link href="/auth?mode=login" className="mt-6 block text-center text-sm text-cyan-100/65">Повернутися до входу</Link>
+        <Link href="/auth?mode=login" className="mt-6 block text-center text-sm text-cyan-100/65">{t.back}</Link>
       </section>
     </main>
   );
