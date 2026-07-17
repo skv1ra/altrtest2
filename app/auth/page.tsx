@@ -176,7 +176,6 @@ export default function AuthPage() {
       </header>
       <div className="relative z-10 mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl items-center gap-12 px-5 pb-14 md:px-8 lg:grid-cols-[1fr_.82fr] lg:pb-24">
         <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="hidden max-w-2xl lg:block">
-          <p className="eyebrow mb-6 flex items-center gap-3"><span>ALTR ID</span><AiMark /><span>{t.sideLabel}</span></p>
           <h1 className="text-balance text-6xl font-medium leading-[.98] tracking-[-.065em] xl:text-7xl">{t.sideTitle}<br /><span className="text-cyan-100/65">{t.sideAccent}</span></h1>
           <div className="mt-12 grid gap-3">{t.steps.map(([number, title, description]) => <div key={number} className="activation-step flex items-start gap-5 rounded-[1.35rem] p-5"><span className="data-label mt-1">{number}</span><div><h2 className="font-medium">{title}</h2><p className="mt-1 text-sm leading-6 text-white/38">{description}</p></div><Check className="ml-auto mt-1 h-4 w-4 text-cyan-100/50" /></div>)}</div>
         </motion.section>
