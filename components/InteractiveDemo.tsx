@@ -71,7 +71,6 @@ export function InteractiveDemo({ lang }: { lang: Lang }) {
               </button>
             ))}
           </div>
-          <span className="hidden text-[10px] uppercase tracking-[0.24em] text-white/25 sm:block">private reply layer</span>
         </div>
 
         <div className="relative grid gap-4 md:grid-cols-[.9fr_1.1fr]">
