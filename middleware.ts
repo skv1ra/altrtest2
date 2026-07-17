@@ -17,6 +17,7 @@ function buildContentSecurityPolicy(nonce: string) {
     "https://*.supabase.co",
     "wss://*.supabase.co",
     "https://api.lemonsqueezy.com",
+    "https://www.gstatic.com",
     ...(!isProduction ? ["http://localhost:*", "ws://localhost:*"] : []),
   ];
 
