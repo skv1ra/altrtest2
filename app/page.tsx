@@ -3,16 +3,16 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, LockKeyhole, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { AltrShardScene } from "@/components/AltrShardScene";
 import { AltrLogo, Navigation } from "@/components/Navigation";
+import { ReferenceHeroScene } from "@/components/ReferenceHeroScene";
 import { useLang } from "@/lib/i18n/lang-store";
 
 const copy = {
   EN: {
-    heroA: "Let it act.",
-    heroB: "As you would.",
-    subtitle: "Altr learns how you think, then handles what you would.",
+    heroA: "Your past learns",
+    heroB: "to remain.",
+    subtitle: "A digital continuation of you, shaped by memory, style, and time.",
     cta: "Create your Altr",
     free: "Free to create",
     productTitle: "It learns your patterns. Then it acts.",
@@ -37,9 +37,9 @@ const copy = {
     footer: ["Product", "How it works", "Pricing", "Privacy", "Terms", "Contact", "Log in"],
   },
   UA: {
-    heroA: "Нехай діє.",
-    heroB: "Так, як діяв би ти.",
-    subtitle: "Altr вивчає, як ти думаєш, а потім бере на себе те, що зробив би ти.",
+    heroA: "Твоє минуле вчиться",
+    heroB: "залишатися.",
+    subtitle: "Цифрове продовження тебе, сформоване памʼяттю, стилем і часом.",
     cta: "Створити свій Altr",
     free: "Створення безкоштовне",
     productTitle: "Він вивчає твої патерни. Потім діє.",
@@ -67,7 +67,6 @@ const copy = {
 
 export default function HomePage() {
   const [lang, setLang] = useLang("EN");
-  const [awakened, setAwakened] = useState(false);
   const reducedMotion = Boolean(useReducedMotion());
   const t = copy[lang];
 
@@ -75,20 +74,18 @@ export default function HomePage() {
     <main id="top" className="landing-page">
       <Navigation lang={lang} setLang={setLang} />
 
-      <section className="landing-hero">
-        <div className="landing-hero-copy">
-          <motion.p className="landing-kicker" initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }}>A universal digital representative</motion.p>
+      <section className="landing-hero landing-hero-reference">
+        <ReferenceHeroScene />
+        <div className="landing-hero-copy landing-hero-copy-reference">
           <motion.h1 initial={reducedMotion ? false : { opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
             <span>{t.heroA}</span>
             <span>{t.heroB}</span>
           </motion.h1>
           <motion.p className="landing-hero-subtitle" initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>{t.subtitle}</motion.p>
-          <motion.div className={`landing-cta-wrap ${awakened ? "is-revealed" : ""}`} initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}>
-            <Link href="/auth?mode=register" className="primary-button">{t.cta}<ArrowRight className="h-4 w-4" /></Link>
-            <small>{t.free}</small>
+          <motion.div className="landing-cta-wrap landing-cta-reference" initial={reducedMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Link href="/auth?mode=register" className="primary-button hero-reference-button">{t.cta}</Link>
           </motion.div>
         </div>
-        <AltrShardScene className="landing-hero-scene" onAwaken={() => setAwakened(true)} />
         <a href="#product" className="landing-scroll-indicator" aria-label="Scroll to product"><span /></a>
       </section>
 
