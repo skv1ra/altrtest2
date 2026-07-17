@@ -1,80 +1,117 @@
 'use client';
 
-import { ContactShadows, useGLTF } from '@react-three/drei';
+import { Bounds, Center, ContactShadows, useGLTF } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Suspense, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { MessengerScene } from './MessengerScene';
 import type { Lang } from './scene-data';
 import styles from './Hero3D.module.css';
 
-const MACBOOK_MODEL = '/api/hero-model/macbook';
-const IPHONE_MODEL = '/api/hero-model/iphone';
-const DRACO_PATH = 'https://www.gstatic.com/draco/versioned/decoders/1.5.7/';
+const MACBOOK = '/api/hero-model/macbook';
+const IPHONE = '/api/hero-model/iphone';
+const DRACO = 'https://www.gstatic.com/draco/versioned/decoders/1.5.7/';
 
-type Props = { lang: Lang; stage: number; reducedMotion: boolean };
-type DeviceProps = { url: string; active: boolean; size: number; position: [number, number, number]; rotation: [number, number, number]; reducedMotion: boolean };
+type Props = { lang: Lang; phase: number; reducedMotion: boolean };
 
-function Device({ url, active, size, position, rotation, reducedMotion }: DeviceProps) {
-  const ref = useRef<THREE.Group>(null);
-  const { scene } = useGLTF(url, DRACO_PATH);
+type ModelProps = {
+  url: string;
+  visible: boolean;
+  closing?: boolean;
+  rotation: [number, number, number];
+};
+
+function Model({ url, visible, closing = false, rotation }: ModelProps) {
+  const root = useRef<THREE.Group>(null);
+  const { scene } = useGLTF(url, DRACO);
   const prepared = useMemo(() => {
     const object = scene.clone(true);
+    const lidNodes: THREE.Object3D[] = [];
     object.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
       }
+      if (/lid|screen|display/i.test(child.name)) lidNodes.push(child);
     });
-    const box = new THREE.Box3().setFromObject(object);
-    const center = box.getCenter(new THREE.Vector3());
-    const dimensions = box.getSize(new THREE.Vector3());
-    object.position.sub(center);
-    const max = Math.max(dimensions.x, dimensions.y, dimensions.z) || 1;
-    return { object, scale: size / max };
-  }, [scene, size]);
+    return { object, lidNodes };
+  }, [scene]);
 
   useFrame((state, delta) => {
-    if (!ref.current) return;
-    const targetY = active ? position[1] : -5;
-    ref.current.position.y = THREE.MathUtils.damp(ref.current.position.y, targetY, 4, delta);
-    ref.current.position.x = THREE.MathUtils.damp(ref.current.position.x, position[0], 4, delta);
-    ref.current.position.z = THREE.MathUtils.damp(ref.current.position.z, position[2], 4, delta);
-    const idle = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.55) * 0.08;
-    ref.current.rotation.y = THREE.MathUtils.damp(ref.current.rotation.y, rotation[1] + idle, 3, delta);
-    ref.current.rotation.x = THREE.MathUtils.damp(ref.current.rotation.x, rotation[0], 3, delta);
-    ref.current.rotation.z = THREE.MathUtils.damp(ref.current.rotation.z, rotation[2], 3, delta);
+    if (!root.current) return;
+    const opacityTarget = visible ? 1 : 0;
+    root.current.scale.x = THREE.MathUtils.damp(root.current.scale.x, opacityTarget, 4, delta);
+    root.current.scale.y = THREE.MathUtils.damp(root.current.scale.y, opacityTarget, 4, delta);
+    root.current.scale.z = THREE.MathUtils.damp(root.current.scale.z, opacityTarget, 4, delta);
+    root.current.position.y = THREE.MathUtils.damp(root.current.position.y, visible ? 0 : -4, 4, delta);
+    root.current.rotation.y = rotation[1] + Math.sin(state.clock.elapsedTime * 0.45) * 0.035;
+    root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, closing ? 0.72 : rotation[0], 3, delta);
+    prepared.lidNodes.forEach((node) => {
+      node.rotation.x = THREE.MathUtils.damp(node.rotation.x, closing ? -1.18 : 0, 3.2, delta);
+    });
   });
 
-  return <group ref={ref} position={position} rotation={rotation} scale={prepared.scale}><primitive object={prepared.object} /></group>;
+  return (
+    <group ref={root} rotation={rotation} scale={visible ? 1 : 0.001}>
+      <Center top>
+        <primitive object={prepared.object} />
+      </Center>
+    </group>
+  );
 }
 
-function Scene({ phone, reducedMotion }: { phone: boolean; reducedMotion: boolean }) {
-  return <>
-    <ambientLight intensity={1.3} />
-    <directionalLight position={[5, 7, 6]} intensity={4.5} color='#ffffff' castShadow />
-    <directionalLight position={[-5, 3, 2]} intensity={2.2} color='#7fc8ff' />
-    <pointLight position={[0, 2, 4]} intensity={2.4} color='#6ecbff' />
-    <Suspense fallback={null}>
-      <Device url={MACBOOK_MODEL} active={!phone} size={6.2} position={[0, -0.35, 0]} rotation={[0.08, -0.45, 0]} reducedMotion={reducedMotion} />
-      <Device url={IPHONE_MODEL} active={phone} size={3.8} position={[0, 0, 0.4]} rotation={[0.05, -0.35, 0.04]} reducedMotion={reducedMotion} />
-      <ContactShadows position={[0, -2.2, 0]} opacity={0.7} scale={10} blur={2.6} far={6} />
-    </Suspense>
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.22, 0]} receiveShadow>
-      <planeGeometry args={[20, 20]} />
-      <meshStandardMaterial color='#05080b' roughness={0.95} />
-    </mesh>
-  </>;
+function Stage({ phase }: { phase: number }) {
+  const phone = phase === 1;
+  const closing = phase === 3;
+  return (
+    <>
+      <ambientLight intensity={1.7} />
+      <directionalLight position={[5, 7, 6]} intensity={5} color='#ffffff' castShadow />
+      <directionalLight position={[-5, 3, 3]} intensity={2.6} color='#79c9ff' />
+      <pointLight position={[0, 1, 5]} intensity={2.4} color='#77d0ff' />
+      <Suspense fallback={null}>
+        <Bounds fit clip observe margin={1.18}>
+          <Model url={MACBOOK} visible={!phone} closing={closing} rotation={[0.02, -0.18, 0]} />
+          <Model url={IPHONE} visible={phone} rotation={[0.02, -0.12, 0.02]} />
+        </Bounds>
+        <ContactShadows position={[0, -2.4, 0]} opacity={0.72} scale={12} blur={2.8} far={7} />
+      </Suspense>
+    </>
+  );
 }
 
-export default function Hero3DScene({ stage, reducedMotion }: Props) {
-  const phone = !reducedMotion && stage >= 6;
-  return <div className={styles.sceneRoot} data-real-3d-hero='true'>
-    <Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 0.6, 8.2], fov: 35, near: 0.1, far: 50 }} gl={{ antialias: true, alpha: true }} onCreated={({ gl }) => { gl.outputColorSpace = THREE.SRGBColorSpace; gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.25; gl.setClearColor(0x000000, 0); }}>
-      <Scene phone={phone} reducedMotion={reducedMotion} />
-    </Canvas>
-    <div className={styles.modelBadge}><span /> REAL GLTF · WEBGL</div>
-  </div>;
+function ChatOverlay({ lang, phase }: { lang: Lang; phase: number }) {
+  const phone = phase === 1;
+  const closing = phase === 3;
+  if (closing) return null;
+  return (
+    <AnimatePresence mode='wait'>
+      <motion.div
+        key={phone ? 'phone' : 'mac'}
+        className={phone ? styles.phoneScreenOverlay : styles.macScreenOverlay}
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: -12 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <MessengerScene lang={lang} replied typing={false} compact={phone} />
+        <div className={phone ? styles.phoneGlass : styles.screenGlass} />
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 
-useGLTF.preload(MACBOOK_MODEL, DRACO_PATH);
-useGLTF.preload(IPHONE_MODEL, DRACO_PATH);
+export default function Hero3DScene({ lang, phase }: Props) {
+  return (
+    <div className={styles.sceneRoot} data-real-3d-hero='true'>
+      <Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 0.5, 8], fov: 34, near: 0.1, far: 100 }} gl={{ antialias: true, alpha: true }}>
+        <Stage phase={phase} />
+      </Canvas>
+      <ChatOverlay lang={lang} phase={phase} />
+    </div>
+  );
+}
+
+useGLTF.preload(MACBOOK, DRACO);
+useGLTF.preload(IPHONE, DRACO);
