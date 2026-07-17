@@ -16,7 +16,6 @@ const demoCopy = {
       { from: "Do you want us to approve the supplier change before lunch?", to: "Yes, approve it. Just double-check the lead time and send me the updated cost before confirming everything." },
       { from: "Could you review the proposal and share your comments?", to: "Yes, I’ll review it today and send comments shortly. I want to check the pricing and delivery terms first." },
     ],
-    labels: ["Tone matched", "Context found", "Memory linked"],
     reveal: "Altr learns how you communicate across clients, teams and email — then helps you respond with context, tone and timing.",
   },
   UA: {
@@ -30,7 +29,6 @@ const demoCopy = {
       { from: "Підтверджуємо зміну постачальника до обіду?", to: "Так, підтверджуйте. Тільки перевірте термін поставки і скиньте мені оновлену ціну перед фінальним погодженням." },
       { from: "Можете переглянути пропозицію і дати коментарі?", to: "Так, перегляну сьогодні й надішлю коментарі. Спочатку хочу перевірити ціну та умови доставки." },
     ],
-    labels: ["Тон збережено", "Контекст знайдено", "Памʼять підключено"],
     reveal: "Altr вчиться, як ти спілкуєшся з клієнтами, командою та в email — а потім допомагає відповідати з правильним контекстом, тоном і таймінгом.",
   },
 } as const;
@@ -51,12 +49,9 @@ export function InteractiveDemo({ lang }: { lang: Lang }) {
 
   return (
     <section id="product" className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:py-24">
-      <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <p className="eyebrow">Conversation learning demo</p>
-          <h2 className="mt-4 max-w-2xl text-4xl font-medium tracking-[-0.055em] text-white md:text-6xl">{t.title}</h2>
-        </div>
-        <p className="max-w-sm text-base leading-7 text-white/45">{t.subtitle}</p>
+      <div className="mb-8">
+        <p className="eyebrow">Conversation learning demo</p>
+        <h2 className="mt-4 max-w-2xl text-4xl font-medium tracking-[-0.055em] text-white md:text-6xl">{t.title}</h2>
       </div>
 
       <motion.div initial={{ opacity: 0, y: 24, filter: "blur(12px)" }} whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }} viewport={{ once: true, margin: "-120px" }} transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="system-demo relative overflow-hidden rounded-[2.2rem] p-4 md:p-6">
@@ -93,7 +88,10 @@ export function InteractiveDemo({ lang }: { lang: Lang }) {
           </div>
         </div>
 
-        <div className="relative mt-5 flex flex-wrap gap-2">{t.labels.map((label) => <span key={label} className="ai-label"><span className="status-dot-css" />{label}</span>)}</div>
+        <div className="relative mt-5 inline-flex max-w-2xl items-center gap-3 rounded-full border border-white/[.07] bg-white/[.03] px-4 py-3 text-sm leading-6 text-white/45">
+          <span className="status-dot-css" />
+          <span>{t.subtitle}</span>
+        </div>
       </motion.div>
 
       <motion.p initial={{ opacity: 0, y: 22, filter: "blur(12px)" }} whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }} viewport={{ once: true, margin: "-80px" }} transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1], delay: 0.08 }} className="mx-auto mt-12 max-w-3xl text-center text-xl leading-9 tracking-[-0.03em] text-white/56 md:text-2xl">
