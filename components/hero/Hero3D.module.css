@@ -1,0 +1,142 @@
+.sceneRoot {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow: hidden;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(76, 128, 161, 0.16), transparent 48%),
+    linear-gradient(180deg, rgba(8, 12, 16, 0.1), rgba(1, 3, 5, 0.58));
+}
+
+.canvas {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: pan-y;
+}
+
+.macScreenOverlay {
+  position: absolute;
+  z-index: 8;
+  top: 16.1%;
+  left: 50%;
+  width: min(54.5%, 785px);
+  aspect-ratio: 16 / 9.95;
+  overflow: hidden;
+  transform: translateX(-50%) perspective(1800px) rotateX(0.5deg) rotateY(-3.1deg) rotateZ(-0.2deg);
+  transform-origin: 50% 100%;
+  border-radius: 7px;
+  background: #071018;
+  box-shadow:
+    0 0 0 1px rgba(143, 204, 242, 0.1),
+    0 0 28px rgba(47, 150, 216, 0.13),
+    inset 0 0 22px rgba(0, 0, 0, 0.36);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.macScreenInner {
+  width: 100%;
+  height: 100%;
+}
+
+.screenGlass,
+.phoneGlass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, rgba(255, 255, 255, 0.085), transparent 19%, transparent 74%, rgba(167, 215, 241, 0.025)),
+    radial-gradient(circle at 84% 10%, rgba(130, 207, 255, 0.08), transparent 28%);
+  mix-blend-mode: screen;
+}
+
+.phoneScreenOverlay {
+  position: absolute;
+  z-index: 9;
+  top: 13.6%;
+  left: calc(50% + 26px);
+  width: clamp(190px, 18.2vw, 258px);
+  aspect-ratio: 0.49;
+  overflow: hidden;
+  transform: translateX(-50%) perspective(1600px) rotateY(-5.7deg) rotateZ(1.2deg);
+  border: 1px solid rgba(202, 229, 245, 0.16);
+  border-radius: clamp(28px, 2.3vw, 38px);
+  background: #080c11;
+  box-shadow:
+    0 24px 65px rgba(0, 0, 0, 0.55),
+    0 0 30px rgba(71, 160, 219, 0.12),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.66);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.modelBadge {
+  position: absolute;
+  z-index: 12;
+  right: 22px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid rgba(173, 218, 245, 0.11);
+  border-radius: 999px;
+  background: rgba(3, 7, 10, 0.55);
+  color: rgba(206, 232, 247, 0.44);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  backdrop-filter: blur(12px);
+}
+
+.modelBadge span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #71caff;
+  box-shadow: 0 0 10px rgba(113, 202, 255, 0.75);
+}
+
+@media (max-width: 1024px) {
+  .macScreenOverlay {
+    top: 19.5%;
+    width: 61%;
+  }
+
+  .phoneScreenOverlay {
+    top: 15%;
+    width: clamp(190px, 24vw, 240px);
+  }
+}
+
+@media (max-width: 640px) {
+  .macScreenOverlay {
+    top: 24.5%;
+    width: 76%;
+    transform: translateX(-50%) perspective(1300px) rotateX(0.7deg) rotateY(-2.2deg);
+    border-radius: 4px;
+  }
+
+  .phoneScreenOverlay {
+    top: 17.5%;
+    left: 51%;
+    width: min(55vw, 220px);
+  }
+
+  .modelBadge {
+    right: 14px;
+    bottom: 13px;
+    padding: 6px 8px;
+    font-size: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .macScreenOverlay,
+  .phoneScreenOverlay {
+    transition: none !important;
+  }
+}
