@@ -3,6 +3,7 @@
 import { useReducedMotion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { Hero3DErrorBoundary } from "./hero/Hero3DErrorBoundary";
 import styles from "./hero/HeroDevices.module.css";
 
 const Hero3DScene = dynamic(() => import("./hero/Hero3DScene"), {
@@ -46,7 +47,9 @@ export function HeroSequence({ lang }: { lang: "EN" | "UA" }) {
       <div className={styles.studioRim} />
       <div className={styles.studioFloor} />
       <div className={styles.sceneGrain} />
-      <Hero3DScene lang={lang} stage={stage} reducedMotion={Boolean(reduced)} />
+      <Hero3DErrorBoundary>
+        <Hero3DScene lang={lang} stage={stage} reducedMotion={Boolean(reduced)} />
+      </Hero3DErrorBoundary>
       <div className={styles.floorReflection} />
     </div>
   );
