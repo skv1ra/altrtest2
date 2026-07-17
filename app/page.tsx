@@ -1,21 +1,15 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, LockKeyhole, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 import styles from "./HomeHero.module.css";
 import { AltrShardScene } from "@/components/AltrShardScene";
-import { AltrLogo, Navigation } from "@/components/Navigation";
+import { AltrLogo } from "@/components/Navigation";
 import { ReferenceHeroScene } from "@/components/ReferenceHeroScene";
 import { useLang } from "@/lib/i18n/lang-store";
 
 const copy = {
   EN: {
-    heroA: "Your past learns",
-    heroB: "to remain.",
-    subtitle: "A digital continuation of you, shaped by memory, style, and time.",
-    cta: "Create your Altr",
-    free: "Free to create",
     productTitle: "It learns your patterns. Then it acts.",
     productBody: "Messages, decisions and memories become practical context — so Altr can move work forward instead of only suggesting what to do.",
     demoLabel: "Memory → Understanding → Action",
@@ -35,14 +29,10 @@ const copy = {
     planFeatures: ["Context-aware communication", "Connected personal memory", "Routine actions and approvals", "Continuous personalization"],
     enterprise: "Work and Enterprise are available by request.",
     finalTitle: "It begins with what you leave behind.",
+    cta: "Create your Altr",
     footer: ["Product", "How it works", "Pricing", "Privacy", "Terms", "Contact", "Log in"],
   },
   UA: {
-    heroA: "Твоє минуле вчиться",
-    heroB: "залишатися.",
-    subtitle: "Цифрове продовження тебе, сформоване памʼяттю, стилем і часом.",
-    cta: "Створити свій Altr",
-    free: "Створення безкоштовне",
     productTitle: "Він вивчає твої патерни. Потім діє.",
     productBody: "Повідомлення, рішення й спогади стають практичним контекстом — щоб Altr рухав роботу вперед, а не лише радив, що робити.",
     demoLabel: "Памʼять → Розуміння → Дія",
@@ -62,32 +52,27 @@ const copy = {
     planFeatures: ["Комунікація з урахуванням контексту", "Повʼязана особиста памʼять", "Рутинні дії та підтвердження", "Постійна персоналізація"],
     enterprise: "Work та Enterprise — за запитом.",
     finalTitle: "Усе починається з того, що ти залишаєш після себе.",
+    cta: "Створити свій Altr",
     footer: ["Продукт", "Як працює", "Ціни", "Приватність", "Умови", "Контакти", "Увійти"],
   },
 } as const;
 
 export default function HomePage() {
-  const [lang, setLang] = useLang("EN");
-  const reducedMotion = Boolean(useReducedMotion());
+  const [lang] = useLang("EN");
   const t = copy[lang];
 
   return (
     <main id="top" className="landing-page">
-      <Navigation lang={lang} setLang={setLang} />
-
       <section className={`landing-hero ${styles.hero}`}>
         <ReferenceHeroScene />
-        <div className={`landing-hero-copy ${styles.copy}`}>
-          <motion.h1 initial={reducedMotion ? false : { opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
-            <span>{t.heroA}</span>
-            <span>{t.heroB}</span>
-          </motion.h1>
-          <motion.p className="landing-hero-subtitle" initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>{t.subtitle}</motion.p>
-          <motion.div className={`landing-cta-wrap ${styles.cta}`} initial={reducedMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <Link href="/auth?mode=register" className={`primary-button ${styles.button}`}>{t.cta}</Link>
-          </motion.div>
-        </div>
-        <a href="#product" className="landing-scroll-indicator" aria-label="Scroll to product"><span /></a>
+        <nav className={styles.hotspots} aria-label="Hero navigation">
+          <a className={styles.logoHotspot} href="#top" aria-label="Altr home" />
+          <a className={styles.productHotspot} href="#product" aria-label="Product" />
+          <a className={styles.howHotspot} href="#how" aria-label="How it works" />
+          <a className={styles.pricingHotspot} href="#pricing" aria-label="Pricing" />
+          <Link className={styles.loginHotspot} href="/auth?mode=login" aria-label="Log in" />
+          <Link className={styles.ctaHotspot} href="/auth?mode=register" aria-label="Create your Altr" />
+        </nav>
       </section>
 
       <section id="product" className="landing-statement section-shell">
@@ -103,9 +88,7 @@ export default function HomePage() {
         </div>
         <div className="demo-stage">
           <div className="demo-context-rail" aria-label="Context used">
-            <span>Client history</span>
-            <span>Previous decision</span>
-            <span>Communication style</span>
+            <span>Client history</span><span>Previous decision</span><span>Communication style</span>
           </div>
           <div className="demo-conversation">
             <div className="demo-message incoming"><span>Client · 09:42</span><p>{t.incoming}</p></div>
@@ -117,75 +100,27 @@ export default function HomePage() {
 
       <section className="landing-memory">
         <div className="section-shell landing-memory-grid">
-          <div>
-            <p className="section-index">03 / Memory</p>
-            <h2>{t.memoryTitle}</h2>
-            <p>{t.memoryBody}</p>
-            <Link href="/memory" className="text-link">Explore memory <ArrowRight className="h-4 w-4" /></Link>
-          </div>
+          <div><p className="section-index">03 / Memory</p><h2>{t.memoryTitle}</h2><p>{t.memoryBody}</p><Link href="/memory" className="text-link">Explore memory <ArrowRight className="h-4 w-4" /></Link></div>
           <AltrShardScene variant="compact" />
         </div>
       </section>
 
       <section className="landing-privacy section-shell">
-        <div className="privacy-boundary" aria-hidden="true">
-          <span className="privacy-core"><AltrLogo compact /></span>
-          <span className="privacy-orbit orbit-one" />
-          <span className="privacy-orbit orbit-two" />
-          <span className="privacy-memory memory-one">message</span>
-          <span className="privacy-memory memory-two">decision</span>
-          <span className="privacy-memory memory-three">person</span>
-        </div>
-        <div>
-          <p className="section-index">04 / Privacy</p>
-          <h2>{t.privacyTitle}</h2>
-          <p>{t.privacyBody}</p>
-          <div className="privacy-note"><LockKeyhole className="h-4 w-4" />Permission remains visible and reversible.</div>
-        </div>
+        <div className="privacy-boundary" aria-hidden="true"><span className="privacy-core"><AltrLogo compact /></span><span className="privacy-orbit orbit-one" /><span className="privacy-orbit orbit-two" /><span className="privacy-memory memory-one">message</span><span className="privacy-memory memory-two">decision</span><span className="privacy-memory memory-three">person</span></div>
+        <div><p className="section-index">04 / Privacy</p><h2>{t.privacyTitle}</h2><p>{t.privacyBody}</p><div className="privacy-note"><LockKeyhole className="h-4 w-4" />Permission remains visible and reversible.</div></div>
       </section>
 
       <section id="pricing" className="landing-pricing section-shell">
-        <div className="section-heading">
-          <p className="section-index">05 / Pricing</p>
-          <h2>{t.pricingTitle}</h2>
-          <p>{t.pricingBody}</p>
-        </div>
+        <div className="section-heading"><p className="section-index">05 / Pricing</p><h2>{t.pricingTitle}</h2><p>{t.pricingBody}</p></div>
         <div className="pricing-presentation">
-          <div>
-            <p className="pricing-plan-name">{t.plan}</p>
-            <p className="pricing-price"><strong>{t.planPrice}</strong><span>{t.perMonth}</span></p>
-            <ul>{t.planFeatures.map((feature) => <li key={feature}><Check className="h-4 w-4" />{feature}</li>)}</ul>
-          </div>
-          <div className="pricing-actions">
-            <Link href="/pricing" className="primary-button">View plan <ArrowRight className="h-4 w-4" /></Link>
-            <p>{t.enterprise}</p>
-          </div>
+          <div><p className="pricing-plan-name">{t.plan}</p><p className="pricing-price"><strong>{t.planPrice}</strong><span>{t.perMonth}</span></p><ul>{t.planFeatures.map((feature) => <li key={feature}><Check className="h-4 w-4" />{feature}</li>)}</ul></div>
+          <div className="pricing-actions"><Link href="/pricing" className="primary-button">View plan <ArrowRight className="h-4 w-4" /></Link><p>{t.enterprise}</p></div>
         </div>
       </section>
 
-      <section className="landing-final">
-        <AltrShardScene variant="artifact" />
-        <div className="landing-final-copy">
-          <h2>{t.finalTitle}</h2>
-          <Link href="/auth?mode=register" className="primary-button">{t.cta}<ArrowRight className="h-4 w-4" /></Link>
-        </div>
-      </section>
+      <section className="landing-final"><AltrShardScene variant="artifact" /><div className="landing-final-copy"><h2>{t.finalTitle}</h2><Link href="/auth?mode=register" className="primary-button">{t.cta}<ArrowRight className="h-4 w-4" /></Link></div></section>
 
-      <footer className="landing-footer">
-        <div className="section-shell">
-          <AltrLogo />
-          <nav aria-label="Footer navigation">
-            <a href="#product">{t.footer[0]}</a>
-            <a href="#how">{t.footer[1]}</a>
-            <a href="#pricing">{t.footer[2]}</a>
-            <Link href="/privacy">{t.footer[3]}</Link>
-            <Link href="/terms">{t.footer[4]}</Link>
-            <a href="mailto:hello@altr.app">{t.footer[5]}</a>
-            <Link href="/auth?mode=login">{t.footer[6]}</Link>
-          </nav>
-          <p>© 2026 Altr</p>
-        </div>
-      </footer>
+      <footer className="landing-footer"><div className="section-shell"><AltrLogo /><nav aria-label="Footer navigation"><a href="#product">{t.footer[0]}</a><a href="#how">{t.footer[1]}</a><a href="#pricing">{t.footer[2]}</a><Link href="/privacy">{t.footer[3]}</Link><Link href="/terms">{t.footer[4]}</Link><a href="mailto:hello@altr.app">{t.footer[5]}</a><Link href="/auth?mode=login">{t.footer[6]}</Link></nav><p>© 2026 Altr</p></div></footer>
     </main>
   );
 }
