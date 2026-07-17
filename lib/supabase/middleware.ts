@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse,type NextRequest } from "next/server";
 import { e2eMocksEnabled,getE2EIdentity } from "@/lib/testing/e2e-auth";
 const pages=["/dashboard","/memory","/assistants","/import-conversations","/billing","/payment/success","/legacy-migration"];
-const publicApi=["/api/auth/","/api/webhooks/","/api/version","/api/health"];
+const publicApi=["/api/auth/","/api/webhooks/","/api/version","/api/health","/api/hero-model/"];
 const protectedPath=(p:string)=>pages.some(x=>p===x||p.startsWith(`${x}/`))||(p.startsWith("/api/")&&!publicApi.some(x=>p.startsWith(x)));
 export function safeRedirectPath(v:string|null,f="/dashboard"){return !v||!v.startsWith("/")||v.startsWith("//")||v.includes("\\")?f:v;}
 function redirect(request:NextRequest,p:string){if(p.startsWith("/api/"))return NextResponse.json({error:"AUTH_REQUIRED"},{status:401});const u=request.nextUrl.clone();u.pathname="/auth";u.search="";u.searchParams.set("mode","login");u.searchParams.set("next",safeRedirectPath(`${p}${request.nextUrl.search}`));return NextResponse.redirect(u);}
