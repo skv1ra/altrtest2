@@ -7,5 +7,4 @@ import * as THREE from "three";
 import type { Lang } from "./scene-data";
 import styles from "./Hero3D.module.css";
 
-const MACBOOK_MODEL = "/api/hero-model/macbook";
-const IPHONE_MODEL = "/api/
+const MACBOOK_MODEL = "/api/hero-model/macbook
