@@ -10,7 +10,7 @@ import { homeCopy } from "@/lib/i18n/home-copy";
 import { useLang } from "@/lib/i18n/lang-store";
 
 export default function Home(){
- const [lang,setLang]=useLang("UA"); const reduced=useReducedMotion(); const t=homeCopy[lang];
+ const [lang,setLang]=useLang("EN"); const reduced=useReducedMotion(); const t=homeCopy[lang];
  const socials=[{label:"X",url:process.env.NEXT_PUBLIC_X_URL},{label:"GitHub",url:process.env.NEXT_PUBLIC_GITHUB_URL}].filter((x):x is {label:string;url:string}=>Boolean(x.url));
  const enter=reduced?{}:{initial:{opacity:0,y:18},animate:{opacity:1,y:0}};
  return <main id="top" className="relative min-h-screen overflow-hidden bg-[#05080c] text-white">
