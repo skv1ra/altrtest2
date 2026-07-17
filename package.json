@@ -20,6 +20,8 @@
   },
   "dependencies": {
     "@lemonsqueezy/lemonsqueezy.js": "4.0.0",
+    "@react-three/drei": "9.122.0",
+    "@react-three/fiber": "8.17.10",
     "@supabase/ssr": "0.5.2",
     "@supabase/supabase-js": "2.48.1",
     "framer-motion": "11.15.0",
@@ -29,6 +31,7 @@
     "openai": "6.46.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "three": "0.170.0",
     "zod": "3.24.1"
   },
   "devDependencies": {
@@ -40,6 +43,7 @@
     "@types/node": "22.10.2",
     "@types/react": "18.2.79",
     "@types/react-dom": "18.2.25",
+    "@types/three": "^0.170.0",
     "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "10.4.20",
     "eslint": "8.57.1",
