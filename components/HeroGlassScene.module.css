@@ -1,5 +1,6 @@
 .scene {
   --sy: 0;
+  --spread: 0;
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 4.6;
@@ -12,6 +13,18 @@
   position: absolute;
   pointer-events: auto;
   transform: translate3d(0, calc(var(--sy) * var(--depth) * -1px), 0);
+  transform-style: preserve-3d;
+}
+
+/* Fast scrolling nudges fragments apart along their outward vector;
+   the transition lets them settle back once --spread returns to 0. */
+.spread {
+  transform: translate3d(
+    calc(var(--spread) * var(--dir-x) * 10px),
+    calc(var(--spread) * var(--dir-y) * 10px),
+    0
+  );
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-style: preserve-3d;
 }
 
@@ -89,6 +102,16 @@
   opacity: 1;
 }
 
+/* Hover-only breath of the silver-blue accent inside the glass. */
+.tint {
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.fragment:hover .tint {
+  opacity: 1;
+}
+
 @media (max-width: 1023px) {
   .scene {
     max-width: 460px;
@@ -105,6 +128,11 @@
   .desktopOnly {
     display: none;
   }
+
+  /* Mobile LOD: drop the turbulence grain — invisible at this size anyway. */
+  .grain {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -114,6 +142,7 @@
   }
 
   .fragment,
+  .spread,
   .push {
     transform: none;
     transition: none;

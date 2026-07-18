@@ -13,7 +13,7 @@ type FragmentDef = {
   width: number;
   tilt: number;
   duration: number;
-  depth: number;
+  depth: number; // parallax factor; larger = closer to the viewer
   opacity: number;
   points: Point[];
   litEdges: Array<{ edge: [number, number]; strength: number }>;
@@ -125,16 +125,44 @@ const FRAGMENTS: FragmentDef[] = [
   },
 ];
 
+const MAX_DEPTH = Math.max(...FRAGMENTS.map((f) => f.depth));
+
+/*
+ * Material model (all layers share one light source at top-left, ~300°):
+ *
+ *  1. body     — cold mineral base, #0A0A0A→#1A1A1A range at 60–85% alpha,
+ *                brighter toward the light.
+ *  2. veil     — atmospheric fade: fragments deeper in the scene pick up a
+ *                trace of the milky background, receding with lower contrast.
+ *  3. grain    — imperceptible fractal noise (~1.5% alpha), clipped to the
+ *                polygon; reads as weathered surface, not texture.
+ *  4. facets   — paired dark+light hairlines: a fracture ridge and the light
+ *                it catches.
+ *  5. streaks  — primary silver reflection stripe (#B8B8B8 ≈50%) with a
+ *                fainter parallel echo, angled 45–60°.
+ *  6. rim      — gradient edge stroke, bright toward the light source.
+ *  7. counter  — faint reversed rim (#A8A8A8, ~25%) on the shadow side,
+ *                implying curvature.
+ *  8. lit      — strongest highlights on the one or two edges that catch
+ *                the key light, with a soft bloom underneath.
+ *  9. tint     — hover-only breath of the silver-blue accent (#A8BACE).
+ */
 function FragmentSvg({ def }: { def: FragmentDef }) {
   const pts = def.points.map((p) => p.join(",")).join(" ");
+  // Depth fade: farthest fragments dissolve slightly into the background.
+  const veil = Math.max(0, (MAX_DEPTH - def.depth) * 0.28);
   return (
     <svg viewBox="0 0 100 132" className={styles.fragmentSvg} role="presentation" focusable="false">
       <defs>
+        <clipPath id={`${def.id}-clip`}>
+          <polygon points={pts} />
+        </clipPath>
         <linearGradient id={`${def.id}-body`} x1="0" y1="0" x2="0.8" y2="1">
-          <stop offset="0" stopColor="rgba(26, 26, 28, 0.68)" />
-          <stop offset="0.5" stopColor="rgba(13, 13, 15, 0.78)" />
-          <stop offset="1" stopColor="rgba(8, 8, 10, 0.85)" />
+          <stop offset="0" stopColor="rgba(27, 29, 33, 0.68)" />
+          <stop offset="0.5" stopColor="rgba(13, 14, 17, 0.78)" />
+          <stop offset="1" stopColor="rgba(8, 9, 11, 0.85)" />
         </linearGradient>
+        {/* Primary reflection stripe + parallel echo, following def.sheen angle. */}
         <linearGradient
           id={`${def.id}-sheen`}
           gradientUnits="userSpaceOnUse"
@@ -143,19 +171,37 @@ function FragmentSvg({ def }: { def: FragmentDef }) {
           x2={def.sheen.x2}
           y2={def.sheen.y2}
         >
-          <stop offset="0" stopColor="rgba(248, 247, 245, 0)" />
-          <stop offset="0.38" stopColor="rgba(248, 247, 245, 0.02)" />
-          <stop offset="0.5" stopColor="rgba(248, 247, 245, 0.14)" />
-          <stop offset="0.62" stopColor="rgba(184, 184, 184, 0.03)" />
-          <stop offset="1" stopColor="rgba(168, 186, 206, 0.05)" />
+          <stop offset="0" stopColor="rgba(196, 199, 204, 0)" />
+          <stop offset="0.482" stopColor="rgba(196, 199, 204, 0)" />
+          <stop offset="0.492" stopColor="rgba(202, 205, 210, 0.48)" />
+          <stop offset="0.504" stopColor="rgba(202, 205, 210, 0.42)" />
+          <stop offset="0.514" stopColor="rgba(196, 199, 204, 0)" />
+          <stop offset="0.60" stopColor="rgba(184, 184, 184, 0)" />
+          <stop offset="0.608" stopColor="rgba(184, 184, 184, 0.14)" />
+          <stop offset="0.62" stopColor="rgba(184, 184, 184, 0)" />
+          <stop offset="1" stopColor="rgba(168, 186, 206, 0.04)" />
         </linearGradient>
         <linearGradient id={`${def.id}-rim`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="rgba(255, 255, 255, 0.95)" />
           <stop offset="0.5" stopColor="rgba(184, 184, 184, 0.55)" />
           <stop offset="1" stopColor="rgba(184, 184, 184, 0.26)" />
         </linearGradient>
+        {/* Reversed rim: light wrapping the shadow side, hints at 3D form. */}
+        <linearGradient id={`${def.id}-counter`} x1="1" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="rgba(168, 168, 168, 0.3)" />
+          <stop offset="0.4" stopColor="rgba(168, 168, 168, 0)" />
+          <stop offset="1" stopColor="rgba(168, 168, 168, 0)" />
+        </linearGradient>
         <filter id={`${def.id}-soft`} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation="1.1" />
+        </filter>
+        {/* Static monochrome grain; alpha-scaled so it never reads as texture. */}
+        <filter id={`${def.id}-grain`} x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" stitchTiles="stitch" />
+          <feColorMatrix
+            type="matrix"
+            values="0 0 0 0 0.76  0 0 0 0 0.78  0 0 0 0 0.82  0 0 0 0.05 0"
+          />
         </filter>
         {def.litEdges.map(({ edge }, index) => {
           const [a, b] = edge;
@@ -180,20 +226,47 @@ function FragmentSvg({ def }: { def: FragmentDef }) {
       </defs>
 
       <polygon points={pts} fill={`url(#${def.id}-body)`} />
-      <polygon points={pts} fill={`url(#${def.id}-sheen)`} />
+      {veil > 0.005 && <polygon points={pts} fill={`rgba(248, 247, 245, ${veil.toFixed(3)})`} />}
+      <rect
+        className={styles.grain}
+        x="0"
+        y="0"
+        width="100"
+        height="132"
+        clipPath={`url(#${def.id}-clip)`}
+        filter={`url(#${def.id}-grain)`}
+      />
 
       {def.facets.map(([from, to], index) => (
-        <line
-          key={index}
-          x1={from[0]}
-          y1={from[1]}
-          x2={to[0]}
-          y2={to[1]}
-          stroke="rgba(216, 220, 226, 0.18)"
-          strokeWidth="0.5"
-        />
+        <g key={index}>
+          <line
+            x1={from[0]}
+            y1={from[1]}
+            x2={to[0]}
+            y2={to[1]}
+            stroke="rgba(42, 42, 42, 0.35)"
+            strokeWidth="0.5"
+          />
+          <line
+            x1={from[0] + 0.6}
+            y1={from[1] + 0.6}
+            x2={to[0] + 0.6}
+            y2={to[1] + 0.6}
+            stroke="rgba(226, 230, 236, 0.13)"
+            strokeWidth="0.45"
+          />
+        </g>
       ))}
 
+      <polygon points={pts} fill={`url(#${def.id}-sheen)`} />
+
+      <polygon
+        points={pts}
+        fill="none"
+        stroke={`url(#${def.id}-counter)`}
+        strokeWidth="0.55"
+        strokeLinejoin="miter"
+      />
       <polygon
         points={pts}
         fill="none"
@@ -233,6 +306,8 @@ function FragmentSvg({ def }: { def: FragmentDef }) {
           </g>
         );
       })}
+
+      <polygon points={pts} fill="rgba(168, 186, 206, 0.07)" className={styles.tint} />
     </svg>
   );
 }
@@ -241,22 +316,34 @@ export function HeroGlassScene() {
   const reducedMotion = Boolean(useReducedMotion());
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Scroll parallax: fragments drift at depth-dependent speeds as the hero scrolls away.
+  // Scroll parallax + velocity spread: fragments drift at depth-dependent
+  // speeds; a fast scroll pushes them slightly apart before they settle.
   useEffect(() => {
     if (reducedMotion) return;
     const root = rootRef.current;
     if (!root) return;
     let frame = 0;
+    let lastY = window.scrollY;
+    let settle: number | undefined;
     const onScroll = () => {
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        root.style.setProperty("--sy", String(Math.min(window.scrollY, 900)));
+        const y = window.scrollY;
+        const velocity = Math.abs(y - lastY);
+        lastY = y;
+        root.style.setProperty("--sy", String(Math.min(y, 900)));
+        if (velocity > 24) {
+          root.style.setProperty("--spread", Math.min(1, velocity / 140).toFixed(2));
+          window.clearTimeout(settle);
+          settle = window.setTimeout(() => root.style.setProperty("--spread", "0"), 160);
+        }
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(settle);
       if (frame) cancelAnimationFrame(frame);
     };
   }, [reducedMotion]);
@@ -269,8 +356,8 @@ export function HeroGlassScene() {
     const dx = bounds.left + bounds.width / 2 - event.clientX;
     const dy = bounds.top + bounds.height / 2 - event.clientY;
     const length = Math.hypot(dx, dy) || 1;
-    target.style.setProperty("--push-x", `${((dx / length) * 12).toFixed(1)}px`);
-    target.style.setProperty("--push-y", `${((dy / length) * 12).toFixed(1)}px`);
+    target.style.setProperty("--push-x", `${((dx / length) * 18).toFixed(1)}px`);
+    target.style.setProperty("--push-y", `${((dy / length) * 18).toFixed(1)}px`);
   };
 
   const release = (event: PointerEvent<HTMLDivElement>) => {
@@ -280,34 +367,44 @@ export function HeroGlassScene() {
 
   return (
     <div ref={rootRef} className={styles.scene} aria-hidden="true">
-      {FRAGMENTS.map((def) => (
-        <div
-          key={def.id}
-          className={`${styles.fragment} ${def.hideOnMobile ? styles.desktopOnly : ""}`}
-          style={
-            {
-              left: `${def.left}%`,
-              top: `${def.top}%`,
-              width: `${def.width}%`,
-              opacity: def.opacity,
-              "--tilt": `${def.tilt}deg`,
-              "--dur": `${def.duration}s`,
-              "--fdelay": `${(def.depth * -20).toFixed(1)}s`,
-              "--depth": def.depth,
-            } as React.CSSProperties
-          }
-          onPointerEnter={push}
-          onPointerLeave={release}
-        >
-          <div className={styles.push}>
-            <div className={styles.turn}>
-              <div className={styles.turnBoost}>
-                <FragmentSvg def={def} />
+      {FRAGMENTS.map((def) => {
+        // Outward unit vector from scene centre, for the scroll-spread motion.
+        const cx = def.left + def.width / 2;
+        const cy = def.top + (def.width * 1.15) / 2;
+        const length = Math.hypot(cx - 50, cy - 50) || 1;
+        return (
+          <div
+            key={def.id}
+            className={`${styles.fragment} ${def.hideOnMobile ? styles.desktopOnly : ""}`}
+            style={
+              {
+                left: `${def.left}%`,
+                top: `${def.top}%`,
+                width: `${def.width}%`,
+                opacity: def.opacity,
+                "--tilt": `${def.tilt}deg`,
+                "--dur": `${def.duration}s`,
+                "--fdelay": `${(def.depth * -20).toFixed(1)}s`,
+                "--depth": def.depth,
+                "--dir-x": ((cx - 50) / length).toFixed(2),
+                "--dir-y": ((cy - 50) / length).toFixed(2),
+              } as React.CSSProperties
+            }
+            onPointerEnter={push}
+            onPointerLeave={release}
+          >
+            <div className={styles.spread}>
+              <div className={styles.push}>
+                <div className={styles.turn}>
+                  <div className={styles.turnBoost}>
+                    <FragmentSvg def={def} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
