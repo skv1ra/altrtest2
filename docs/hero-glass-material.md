@@ -1,59 +1,56 @@
-# Hero glass fragments — material & tuning guide
+# Hero glass shards — material & tuning guide
 
 The hero scene (`components/HeroGlassScene.tsx` + `HeroGlassScene.module.css`)
-renders six asymmetric shards of dark damaged glass in SVG. No Three.js/WebGL:
-every layer is a gradient, stroke, or filter inside one small SVG per fragment,
-so the whole scene stays GPU-composited and holds 60 fps.
+composes **pre-rendered photorealistic raster shards** — not vector polygons.
+The PNGs live in `public/hero-shards/` and are generated offline by
+`scripts/generate-hero-shards.mjs` (canvas rendering in headless Chromium via
+Playwright).
 
-## Layer stack (bottom → top, per fragment)
+## Regenerating the assets
 
-| Layer     | What it is                                                        | Where to tune |
-| --------- | ----------------------------------------------------------------- | ------------- |
-| `body`    | Cold mineral base, `#0A0A0A–#1A1A1A` range at 60–85% alpha        | `-body` gradient stops |
-| veil      | Atmospheric fade: deeper fragments pick up the milky background   | `veil` factor in `FragmentSvg` (`(MAX_DEPTH - depth) * 0.28`) |
-| `grain`   | Fractal-noise rect (~1.5% alpha) clipped to the polygon           | `-grain` filter: `baseFrequency`, alpha in `feColorMatrix` (4th row, currently `0.05`) |
-| facets    | Paired dark + light hairlines = fracture ridge catching light     | `facets` data per fragment; stroke colors in the facet `<g>` |
-| `sheen`   | Primary silver reflection stripe + fainter parallel echo          | `-sheen` gradient: stripe position = stop offsets around `0.49–0.51`, angle = `sheen {x1,y1,x2,y2}` per fragment |
-| `counter` | Faint reversed rim on the shadow side (curvature hint)            | `-counter` gradient |
-| `rim`     | Gradient edge stroke, bright toward the key light                 | `-rim` gradient; base opacity `0.82` |
-| `lit`     | Brightest edges facing the light, with soft bloom underneath      | `litEdges` per fragment (edge index pair + strength) |
-| `tint`    | Hover-only silver-blue breath (`#A8BACE` at 7%)                   | last `<polygon>` + `.tint` CSS |
-
-Light direction is global: top-left (~300°). All gradients (`body`, `rim`,
-`counter`) assume it — if you change the light, flip their `x1/y1/x2/y2`
-consistently across all three.
-
-## Motion model (wrapper nesting matters)
-
-```
-.fragment   scroll parallax  — translate3d(0, --sy * --depth)
- └ .spread  velocity spread  — fragments nudge outward on fast scroll, settle via transition
-    └ .push hover repel      — moves 18px away from cursor (--push-x/y set in JS)
-       └ .turn      base rotation, unique 8–15s period per fragment
-          └ .turnBoost  extra oscillation, paused; released on :hover (smooth "speed-up")
+```bash
+node scripts/generate-hero-shards.mjs            # writes to public/hero-shards
+node scripts/generate-hero-shards.mjs some/dir   # writes elsewhere for preview
 ```
 
-All motion is `transform`-only (GPU-composited, no layout). Easing everywhere:
-`cubic-bezier(0.25, 0.46, 0.45, 0.94)`.
+Generation is fully deterministic per `seed`, so re-running reproduces the
+same shards. Tune a shard by editing its entry in the `SHARDS` table at the
+bottom of the script and re-running.
 
-## Performance notes
+## What the generator bakes into each PNG
 
-- Measured (Playwright/Chromium): 60 fps idle, 60 fps during hover, 60 fps at
-  390×844 mobile viewport.
-- Never put `filter: blur()` or `will-change` on the viewport-sized wrappers —
-  that was tried and collapses software-rendered environments to ~0 fps.
-  Filters live only on the small fragment SVGs.
-- The `feTurbulence` grain is static content: it rasterizes once and rides the
-  composited transforms afterwards.
-- Mobile LOD: grain rect is `display: none` under 768px; two fragments carry
-  `hideOnMobile`.
-- `prefers-reduced-motion`: all animations and transforms are disabled in CSS,
-  and the JS scroll/hover handlers early-return.
+| Pass | Detail | Knobs (per-shard params) |
+| ---- | ------ | ------------------------ |
+| Silhouette | Evenly-jittered convex crystal with one acute spike, straight edges, fine fracture micro-jag, bitten chips | `verts`, `elong`, `jag`, `chips` |
+| Body | Cold dark glass `#0A0A0A–#1A1A1A`, brighter toward top-left key light | `tone` (lighten), `transparency` |
+| Facets | Half-plane shading — some faces mirror the bright sky, some fall to black — with dark seam + catch-light on boundaries | `facetN` |
+| Sky wedge | One broad blurred reflection band sweeping across the glass | inline in script |
+| Cracks | Branching bright fracture polylines (straight runs, sharp kinks) + micro-cracks, each with a soft halo | `cracks`, `microCracks` |
+| Scratches | ~46 faint short strokes at random angles | inline |
+| Grain | Per-pixel noise composited with `overlay` (imperceptible) | inline |
+| Inner shadow | Wide blurred dark stroke inside the contour | inline |
+| Rim light | White edge strokes weighted by how much each edge faces the top-left light, with chromatic blue/warm fringes, inner bevel line (glass thickness), vertex sparkles | `rimBoost` |
 
-## Adding a fragment
+Light direction is global (top-left ≈ 300°) — `litSegment()` orients contour
+normals outward and dots them with the light vector.
 
-Add an entry to `FRAGMENTS`: 3–6 vertex polygon in a `0 0 100 132` viewBox
-(asymmetric, no regular geometry), pick `depth` (0.05–0.3; higher = closer =
-faster parallax), a unique `duration` in 8–15s, one or two `litEdges` facing
-top-left, and a `sheen` vector angled 45–60°. IDs must stay unique — they
-namespace the SVG defs.
+## Runtime composition (`HeroGlassScene.tsx`)
+
+- Six `<Image>` shards positioned in a loose 3D arrangement; the large
+  cracked `shard-main` sits centre-right and stays in focus.
+- **Depth of field:** `dof` px of CSS blur per shard — one big defocused
+  foreground shard (7px) drifting past the camera, small soft background
+  shards (2–3px). In-focus shards are interactive; defocused ones ignore
+  pointer events.
+- **Fog:** `.fog` — two blurred radial glows behind the cluster.
+- **Motion** (all `transform`-only, easing `cubic-bezier(0.25,0.46,0.45,0.94)`):
+  - scroll parallax by `depth`, plus velocity-based spread that settles back;
+  - slow per-shard drift/rotation (9–17s periods);
+  - hover: shard eases 18px away from the cursor, brightness +16%.
+- `prefers-reduced-motion` disables everything; two shards hide on mobile.
+
+## Performance
+
+Measured in Chromium (Playwright): 60 fps idle, hover, and at 390×844.
+Blur filters are only ever applied to the shard images themselves — never to
+viewport-sized wrappers (that path collapses software renderers).

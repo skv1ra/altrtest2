@@ -4,19 +4,34 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 4.6;
-  max-height: 640px;
-  perspective: 1100px;
+  max-height: 660px;
   pointer-events: none;
 }
 
-.fragment {
+/* Atmospheric fog: a bright cold glow the shards float in front of. */
+.fog {
   position: absolute;
-  pointer-events: auto;
-  transform: translate3d(0, calc(var(--sy) * var(--depth) * -1px), 0);
-  transform-style: preserve-3d;
+  inset: -30% -24%;
+  background:
+    radial-gradient(58% 50% at 55% 40%, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0) 78%),
+    radial-gradient(80% 70% at 42% 62%, rgba(214, 221, 229, 0.4), rgba(214, 221, 229, 0) 80%);
+  filter: blur(12px);
 }
 
-/* Fast scrolling nudges fragments apart along their outward vector;
+.shard {
+  position: absolute;
+  transform: translate3d(0, calc(var(--sy) * var(--depth) * -1px), 0);
+}
+
+.focused {
+  pointer-events: auto;
+}
+
+.defocused {
+  pointer-events: none;
+}
+
+/* Fast scrolling nudges shards apart along their outward vector;
    the transition lets them settle back once --spread returns to 0. */
 .spread {
   transform: translate3d(
@@ -25,7 +40,6 @@
     0
   );
   transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  transform-style: preserve-3d;
 }
 
 /* Eases away from the cursor on hover (--push-* set from JS). */
@@ -34,114 +48,66 @@
   --push-y: 0px;
   transform: translate3d(var(--push-x), var(--push-y), 0);
   transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  transform-style: preserve-3d;
 }
 
-/* Slow rotation around the fragment's own axis, unique period per fragment. */
+/* Slow drift and rotation around the shard's own axis. */
 .turn {
-  transform-style: preserve-3d;
-  animation: fragment-turn var(--dur) cubic-bezier(0.45, 0, 0.55, 1) var(--fdelay) infinite;
+  animation: shard-turn var(--dur) cubic-bezier(0.45, 0, 0.55, 1) var(--fdelay) infinite;
 }
 
-@keyframes fragment-turn {
+@keyframes shard-turn {
   0% {
-    transform: rotate(var(--tilt)) rotateX(5deg) rotateY(-9deg);
+    transform: rotate(var(--tilt)) translate3d(0, -6px, 0);
   }
   50% {
-    transform: rotate(calc(var(--tilt) + 1.6deg)) rotateX(-4deg) rotateY(10deg);
+    transform: rotate(calc(var(--tilt) + 2.2deg)) translate3d(0, 6px, 0);
   }
   100% {
-    transform: rotate(var(--tilt)) rotateX(5deg) rotateY(-9deg);
+    transform: rotate(var(--tilt)) translate3d(0, -6px, 0);
   }
 }
 
-/* Extra motion held paused; released on hover so rotation quickens without a jump. */
-.turnBoost {
-  animation: fragment-boost calc(var(--dur) * 0.5) ease-in-out infinite alternate paused;
-}
-
-.fragment:hover .turnBoost {
-  animation-play-state: running;
-}
-
-@keyframes fragment-boost {
-  from {
-    transform: rotate(-1.4deg);
-  }
-  to {
-    transform: rotate(1.4deg);
-  }
-}
-
-.fragmentSvg {
+.shardImg {
   display: block;
   width: 100%;
   height: auto;
-  overflow: visible;
-  filter: drop-shadow(0 24px 28px rgba(26, 26, 26, 0.16));
+  user-select: none;
+  filter: blur(var(--dof));
   transition: filter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.fragment:hover .fragmentSvg {
-  filter: drop-shadow(0 28px 34px rgba(26, 26, 26, 0.2)) brightness(1.28);
+.shadowed .shardImg {
+  filter: blur(var(--dof)) drop-shadow(0 30px 44px rgba(18, 22, 28, 0.28));
 }
 
-.rim {
-  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.fragment:hover .rim {
-  opacity: 1;
-}
-
-.lit {
-  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.fragment:hover .lit {
-  opacity: 1;
-}
-
-/* Hover-only breath of the silver-blue accent inside the glass. */
-.tint {
-  opacity: 0;
-  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.fragment:hover .tint {
-  opacity: 1;
+.focused:hover .shardImg {
+  filter: blur(var(--dof)) drop-shadow(0 34px 50px rgba(18, 22, 28, 0.32)) brightness(1.16);
 }
 
 @media (max-width: 1023px) {
   .scene {
-    max-width: 460px;
+    max-width: 480px;
     margin-inline: auto;
   }
 }
 
 @media (max-width: 767px) {
   .scene {
-    aspect-ratio: 4 / 3.4;
-    max-width: 400px;
+    aspect-ratio: 4 / 3.6;
+    max-width: 420px;
   }
 
   .desktopOnly {
     display: none;
   }
-
-  /* Mobile LOD: drop the turbulence grain — invisible at this size anyway. */
-  .grain {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .turn,
-  .turnBoost {
+  .turn {
     animation: none;
   }
 
-  .fragment,
+  .shard,
   .spread,
   .push {
     transform: none;
