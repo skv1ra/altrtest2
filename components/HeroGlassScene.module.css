@@ -1,0 +1,121 @@
+.scene {
+  --sy: 0;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 4.6;
+  max-height: 640px;
+  perspective: 1100px;
+  pointer-events: none;
+}
+
+.fragment {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate3d(0, calc(var(--sy) * var(--depth) * -1px), 0);
+  transform-style: preserve-3d;
+}
+
+/* Eases away from the cursor on hover (--push-* set from JS). */
+.push {
+  --push-x: 0px;
+  --push-y: 0px;
+  transform: translate3d(var(--push-x), var(--push-y), 0);
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+}
+
+/* Slow rotation around the fragment's own axis, unique period per fragment. */
+.turn {
+  transform-style: preserve-3d;
+  animation: fragment-turn var(--dur) cubic-bezier(0.45, 0, 0.55, 1) var(--fdelay) infinite;
+}
+
+@keyframes fragment-turn {
+  0% {
+    transform: rotate(var(--tilt)) rotateX(5deg) rotateY(-9deg);
+  }
+  50% {
+    transform: rotate(calc(var(--tilt) + 1.6deg)) rotateX(-4deg) rotateY(10deg);
+  }
+  100% {
+    transform: rotate(var(--tilt)) rotateX(5deg) rotateY(-9deg);
+  }
+}
+
+/* Extra motion held paused; released on hover so rotation quickens without a jump. */
+.turnBoost {
+  animation: fragment-boost calc(var(--dur) * 0.5) ease-in-out infinite alternate paused;
+}
+
+.fragment:hover .turnBoost {
+  animation-play-state: running;
+}
+
+@keyframes fragment-boost {
+  from {
+    transform: rotate(-1.4deg);
+  }
+  to {
+    transform: rotate(1.4deg);
+  }
+}
+
+.fragmentSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 24px 28px rgba(26, 26, 26, 0.16));
+  transition: filter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.fragment:hover .fragmentSvg {
+  filter: drop-shadow(0 28px 34px rgba(26, 26, 26, 0.2)) brightness(1.28);
+}
+
+.rim {
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.fragment:hover .rim {
+  opacity: 1;
+}
+
+.lit {
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.fragment:hover .lit {
+  opacity: 1;
+}
+
+@media (max-width: 1023px) {
+  .scene {
+    max-width: 460px;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .scene {
+    aspect-ratio: 4 / 3.4;
+    max-width: 400px;
+  }
+
+  .desktopOnly {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn,
+  .turnBoost {
+    animation: none;
+  }
+
+  .fragment,
+  .push {
+    transform: none;
+    transition: none;
+  }
+}

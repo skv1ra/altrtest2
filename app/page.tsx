@@ -1,15 +1,20 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, LockKeyhole, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 import styles from "./HomeHero.module.css";
 import { AltrShardScene } from "@/components/AltrShardScene";
-import { AltrLogo } from "@/components/Navigation";
-import { ReferenceHeroScene } from "@/components/ReferenceHeroScene";
+import { HeroGlassScene } from "@/components/HeroGlassScene";
+import { AltrLogo, Navigation } from "@/components/Navigation";
 import { useLang } from "@/lib/i18n/lang-store";
 
 const copy = {
   EN: {
+    heroA: "Your past learns",
+    heroB: "to remain.",
+    subtitle: "A digital continuation of you, shaped by memory, style, and time.",
+    free: "Free to create",
     productTitle: "It learns your patterns. Then it acts.",
     productBody: "Messages, decisions and memories become practical context — so Altr can move work forward instead of only suggesting what to do.",
     demoLabel: "Memory → Understanding → Action",
@@ -33,6 +38,10 @@ const copy = {
     footer: ["Product", "How it works", "Pricing", "Privacy", "Terms", "Contact", "Log in"],
   },
   UA: {
+    heroA: "Твоє минуле вчиться",
+    heroB: "залишатися.",
+    subtitle: "Цифрове продовження тебе, сформоване памʼяттю, стилем і часом.",
+    free: "Створення безкоштовне",
     productTitle: "Він вивчає твої патерни. Потім діє.",
     productBody: "Повідомлення, рішення й спогади стають практичним контекстом — щоб Altr рухав роботу вперед, а не лише радив, що робити.",
     demoLabel: "Памʼять → Розуміння → Дія",
@@ -58,21 +67,57 @@ const copy = {
 } as const;
 
 export default function HomePage() {
-  const [lang] = useLang("EN");
+  const [lang, setLang] = useLang("EN");
+  const reducedMotion = Boolean(useReducedMotion());
   const t = copy[lang];
 
   return (
     <main id="top" className="landing-page">
+      <Navigation lang={lang} setLang={setLang} />
+
       <section className={`landing-hero ${styles.hero}`}>
-        <ReferenceHeroScene />
-        <nav className={styles.hotspots} aria-label="Hero navigation">
-          <a className={styles.logoHotspot} href="#top" aria-label="Altr home" />
-          <a className={styles.productHotspot} href="#product" aria-label="Product" />
-          <a className={styles.howHotspot} href="#how" aria-label="How it works" />
-          <a className={styles.pricingHotspot} href="#pricing" aria-label="Pricing" />
-          <Link className={styles.loginHotspot} href="/auth?mode=login" aria-label="Log in" />
-          <Link className={styles.ctaHotspot} href="/auth?mode=register" aria-label="Create your Altr" />
-        </nav>
+        <div className={styles.inner}>
+          <div className={styles.copy}>
+            <motion.h1
+              initial={reducedMotion ? false : { opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              <span>{t.heroA}</span>
+              <span>{t.heroB}</span>
+            </motion.h1>
+            <motion.p
+              className={styles.subtitle}
+              initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              {t.subtitle}
+            </motion.p>
+            <motion.div
+              className={styles.ctaWrap}
+              initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.34, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              <Link href="/auth?mode=register" className={`primary-button ${styles.button}`}>
+                {t.cta}
+              </Link>
+              <small>{t.free}</small>
+            </motion.div>
+          </div>
+          <motion.div
+            className={styles.sceneCol}
+            initial={reducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 1.1, ease: "easeOut" }}
+          >
+            <HeroGlassScene />
+          </motion.div>
+        </div>
+        <a href="#product" className={`landing-scroll-indicator ${styles.scroll}`} aria-label="Scroll to product">
+          <span />
+        </a>
       </section>
 
       <section id="product" className="landing-statement section-shell">
